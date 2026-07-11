@@ -1,0 +1,21 @@
+*.vcd
+sim
+build/
+.DS_Store
+.vscode/
+
+# SymbiYosys work directories
+formal/*/
+
+# cocotb
+sim_build/
+__pycache__/
+*.pyc
+results.xml
+
+# FPGA build artifacts (yosys / nextpnr / prjxray / openFPGALoader)
+*.bit
+*.frames
+*.fasm
+*.json
+*.log
