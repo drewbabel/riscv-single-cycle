@@ -30,15 +30,13 @@ module extend_tb;
     $dumpvars(0, extend_tb);
 
     // Golden vectors assembled with riscv64-elf-gcc (rv32i)
-    vectors = '{
-      {32'hffc00093, 3'd0, 32'hfffffffc},  // I neg addi -4
-      {32'h00500113, 3'd0, 32'h00000005},  // I pos addi 5
-      {32'hfe322c23, 3'd1, 32'hfffffff8},  // S neg sw -8
-      {32'hfe6288e3, 3'd2, 32'hfffffff0},  // B neg beq -16
-      {32'h123453b7, 3'd3, 32'h12345000},  // U lui 0x12345
-      {32'h0100046f, 3'd4, 32'h00000010},  // J pos jal +16
-      {32'hff9ff4ef, 3'd4, 32'hfffffff8}   // J neg jal -8
-    };
+    vectors[0] = {32'hffc00093, 3'd0, 32'hfffffffc};  // I neg addi -4
+    vectors[1] = {32'h00500113, 3'd0, 32'h00000005};  // I pos addi 5
+    vectors[2] = {32'hfe322c23, 3'd1, 32'hfffffff8};  // S neg sw -8
+    vectors[3] = {32'hfe6288e3, 3'd2, 32'hfffffff0};  // B neg beq -16
+    vectors[4] = {32'h123453b7, 3'd3, 32'h12345000};  // U lui 0x12345
+    vectors[5] = {32'h0100046f, 3'd4, 32'h00000010};  // J pos jal +16
+    vectors[6] = {32'hff9ff4ef, 3'd4, 32'hfffffff8};  // J neg jal -8
 
     foreach (vectors[i]) begin
       instr   = vectors[i][66:35];

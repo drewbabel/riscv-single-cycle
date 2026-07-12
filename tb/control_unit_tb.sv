@@ -72,24 +72,22 @@ module control_unit_tb
     $dumpvars(0, control_unit_tb);
 
     // All six branches both directions, plus jumps and non-branch
-    pc_vectors = '{
-        {OpcodeBranch, 3'b000, 1'b1, 1'b0, 1'b0, 1'b1},  // beq taken
-        {OpcodeBranch, 3'b000, 1'b0, 1'b0, 1'b0, 1'b0},  // beq not
-        {OpcodeBranch, 3'b001, 1'b0, 1'b0, 1'b0, 1'b1},  // bne taken
-        {OpcodeBranch, 3'b001, 1'b1, 1'b0, 1'b0, 1'b0},  // bne not
-        {OpcodeBranch, 3'b100, 1'b0, 1'b1, 1'b0, 1'b1},  // blt taken
-        {OpcodeBranch, 3'b100, 1'b0, 1'b0, 1'b0, 1'b0},  // blt not
-        {OpcodeBranch, 3'b101, 1'b0, 1'b0, 1'b0, 1'b1},  // bge taken
-        {OpcodeBranch, 3'b101, 1'b0, 1'b1, 1'b0, 1'b0},  // bge not
-        {OpcodeBranch, 3'b110, 1'b0, 1'b0, 1'b1, 1'b1},  // bltu taken
-        {OpcodeBranch, 3'b110, 1'b0, 1'b0, 1'b0, 1'b0},  // bltu not
-        {OpcodeBranch, 3'b111, 1'b0, 1'b0, 1'b0, 1'b1},  // bgeu taken
-        {OpcodeBranch, 3'b111, 1'b0, 1'b0, 1'b1, 1'b0},  // bgeu not
-        {OpcodeJal, 3'b000, 1'b0, 1'b0, 1'b0, 1'b1},  // jal
-        {OpcodeJalr, 3'b000, 1'b0, 1'b0, 1'b0, 1'b1},  // jalr
-        {OpcodeOp, 3'b000, 1'b1, 1'b1, 1'b1, 1'b0},  // op no jump
-        {OpcodeLoad, 3'b000, 1'b1, 1'b1, 1'b1, 1'b0}  // load no jump
-    };
+    pc_vectors[0]  = {OpcodeBranch, 3'b000, 1'b1, 1'b0, 1'b0, 1'b1};  // beq taken
+    pc_vectors[1]  = {OpcodeBranch, 3'b000, 1'b0, 1'b0, 1'b0, 1'b0};  // beq not
+    pc_vectors[2]  = {OpcodeBranch, 3'b001, 1'b0, 1'b0, 1'b0, 1'b1};  // bne taken
+    pc_vectors[3]  = {OpcodeBranch, 3'b001, 1'b1, 1'b0, 1'b0, 1'b0};  // bne not
+    pc_vectors[4]  = {OpcodeBranch, 3'b100, 1'b0, 1'b1, 1'b0, 1'b1};  // blt taken
+    pc_vectors[5]  = {OpcodeBranch, 3'b100, 1'b0, 1'b0, 1'b0, 1'b0};  // blt not
+    pc_vectors[6]  = {OpcodeBranch, 3'b101, 1'b0, 1'b0, 1'b0, 1'b1};  // bge taken
+    pc_vectors[7]  = {OpcodeBranch, 3'b101, 1'b0, 1'b1, 1'b0, 1'b0};  // bge not
+    pc_vectors[8]  = {OpcodeBranch, 3'b110, 1'b0, 1'b0, 1'b1, 1'b1};  // bltu taken
+    pc_vectors[9]  = {OpcodeBranch, 3'b110, 1'b0, 1'b0, 1'b0, 1'b0};  // bltu not
+    pc_vectors[10] = {OpcodeBranch, 3'b111, 1'b0, 1'b0, 1'b0, 1'b1};  // bgeu taken
+    pc_vectors[11] = {OpcodeBranch, 3'b111, 1'b0, 1'b0, 1'b1, 1'b0};  // bgeu not
+    pc_vectors[12] = {OpcodeJal, 3'b000, 1'b0, 1'b0, 1'b0, 1'b1};     // jal
+    pc_vectors[13] = {OpcodeJalr, 3'b000, 1'b0, 1'b0, 1'b0, 1'b1};    // jalr
+    pc_vectors[14] = {OpcodeOp, 3'b000, 1'b1, 1'b1, 1'b1, 1'b0};      // op no jump
+    pc_vectors[15] = {OpcodeLoad, 3'b000, 1'b1, 1'b1, 1'b1, 1'b0};    // load no jump
 
     foreach (pc_vectors[i]) begin
       op       = pc_vectors[i][13:7];
@@ -108,11 +106,9 @@ module control_unit_tb
     end
 
     // alu_ctrl end to end
-    alu_vectors = '{
-        {OpcodeOp, 3'b000, 1'b1, ALU_SUB},  // r-sub
-        {OpcodeOpImm, 3'b000, 1'b1, ALU_ADD},  // addi
-        {OpcodeLoad, 3'b010, 1'b0, ALU_ADD}  // load add
-    };
+    alu_vectors[0] = {OpcodeOp, 3'b000, 1'b1, ALU_SUB};    // r-sub
+    alu_vectors[1] = {OpcodeOpImm, 3'b000, 1'b1, ALU_ADD};  // addi
+    alu_vectors[2] = {OpcodeLoad, 3'b010, 1'b0, ALU_ADD};   // load add
 
     foreach (alu_vectors[i]) begin
       op       = alu_vectors[i][14:8];
