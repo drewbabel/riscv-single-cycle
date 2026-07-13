@@ -3,6 +3,8 @@
 #   make view MOD=alu            open testbench waveform in surfer (no rerun); error if .vcd missing
 #   make view-formal MOD=alu     open formal waveform; error if .vcd missing
 #   make formal MOD=alu          run every SymbiYosys task in formal/$(MOD).sby; a FAIL exits nonzero
+#   make hex PROG=program        assemble tests/$(PROG).s -> tests/$(PROG).hex for $readmemh
+#   make dis PROG=program        disassemble the built elf (sanity-check the machine code)
 #   make clean                   delete build artifacts (build/, *.vcd)
 
 # alu_pkg.sv must compile before any module that imports it
@@ -12,6 +14,12 @@ SIM := build/sim
 VCD := $(MOD)_tb.vcd
 WAVE_STATE := tb/$(MOD).ron
 FORMAL := formal/$(MOD).sby
+
+# program build: RISC-V assembly -> hex words for $readmemh
+RVGCC   := riscv64-elf-gcc
+RVCOPY  := riscv64-elf-objcopy
+RVDUMP  := riscv64-elf-objdump
+RVFLAGS := -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles -T tests/link.ld
 
 run:
 	@test -n "$(MOD)" || { echo "usage: make MOD=<module>  (e.g. MOD=alu)"; exit 1; }
@@ -44,8 +52,19 @@ view-formal:
 	@test -f "$$(find formal/$(MOD) -name '*.vcd' 2>/dev/null | head -1)" || { echo "Error: no .vcd found in formal/$(MOD)/"; exit 1; }
 	surfer $$(find formal/$(MOD) -name '*.vcd' 2>/dev/null | head -1) -s formal/$(MOD).ron &
 
+hex:
+	@test -n "$(PROG)" || { echo "usage: make hex PROG=<name>  (tests/<name>.s -> tests/<name>.hex)"; exit 1; }
+	@mkdir -p build
+	$(RVGCC) $(RVFLAGS) -o build/$(PROG).elf tests/$(PROG).s
+	$(RVCOPY) -O verilog --verilog-data-width=4 build/$(PROG).elf tests/$(PROG).hex
+	@echo "built tests/$(PROG).hex"
+
+dis:
+	@test -n "$(PROG)" || { echo "usage: make dis PROG=<name>"; exit 1; }
+	$(RVDUMP) -d build/$(PROG).elf
+
 clean:
 	rm -rf build *.vcd sim_build results.xml
 
 .DEFAULT_GOAL := run
-.PHONY: run wave formal view view-formal clean
+.PHONY: run wave formal view view-formal hex dis clean
