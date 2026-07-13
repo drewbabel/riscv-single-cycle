@@ -1,4 +1,3 @@
-// Extremely simple bring-up only tb
 module top_tb ();
 
   int checks = 0;
@@ -6,6 +5,7 @@ module top_tb ();
 
   localparam int Xlen = 32;
   localparam int Depth = 64;
+
   localparam int InstrCnt = 6;
 
   logic            clk = 1'b0;
@@ -36,6 +36,7 @@ module top_tb ();
   endtask  // Automatic
 
   task automatic verdict();
+    @(posedge clk);
     if (errors == 0) $display("PASS: %0d checks, %0d mismatches", checks, errors);
     else $fatal(1, "FAIL: %0d mismatches, %0d checks", errors, checks);
     $finish;
@@ -44,6 +45,8 @@ module top_tb ();
   task automatic check_manual();
     logic [Xlen-1:0] exp_array[InstrCnt];
     logic [Xlen-1:0] got;
+
+    repeat (InstrCnt) @(posedge clk);
 
     exp_array[0] = 32'd5;
     exp_array[1] = 32'd3;
@@ -64,14 +67,47 @@ module top_tb ();
     end
   endtask  // Automatic
 
+  task automatic check_loop();
+    int counter;
+    logic [Xlen-1:0] last;
+
+    last = pc;
+    @(posedge clk);
+    #1;
+    while (pc !== last) begin
+      last = pc;
+      @(posedge clk);
+      #1;
+    end
+
+    #1;
+    checks++;
+    if (dut.dmem_inst.mem[0] == 28) begin
+      checks++;
+      counter = dut.riscv_single_inst.datapath_inst.regfile_inst.regfile_mem[1];
+      if (counter !== 0) begin
+        errors++;
+        $error("t=%0t loop counter mismatch: got=%0d, exp=%0d", $time, counter, 0);
+      end
+    end else begin
+      errors++;
+      $error("t=%0t mem  mismatch: got=%0d, exp=%0d", $time, dut.dmem_inst.mem[0], 28);
+    end
+  endtask  // Automatic
+
   initial begin
     $dumpfile("top_tb.vcd");
     $dumpvars(0, top_tb);
+
+    // program.hex
     $readmemh("tests/program.hex", dut.imem_inst.mem);
     do_reset();
-    repeat (InstrCnt) @(posedge clk);  // 1 clk per instruction in tests/program.hex
-
     check_manual();
+
+    // loop.hex
+    $readmemh("tests/loop.hex", dut.imem_inst.mem);
+    do_reset();
+    check_loop();
 
     verdict();
   end
