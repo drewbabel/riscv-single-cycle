@@ -1,7 +1,7 @@
         .section .text
         .globl _start
 _start:
-        lui   x3, 0x80000       # data base 0x80000000
+        lui   x3, 0x80008       # data base 0x80008000, clear of code in Spike
         addi  x1, x0, 15
         addi  x2, x0, 4
         add   x4, x1, x2        # 19
