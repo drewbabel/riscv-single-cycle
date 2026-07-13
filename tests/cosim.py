@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Lockstep co-sim of the core against Spike
-# python3 tests/cosim.py <prog>
+# python3 tests/cosim.py <prog> | --rand [count] [seed0]
 
 import os
+import random
 import re
 import subprocess
 import sys
@@ -114,10 +115,104 @@ def compare(dut, spike):
     return True, n
 
 
+# randomized program generation
+
+R_OPS = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and"]
+I_OPS = ["addi", "slti", "sltiu", "xori", "ori", "andi"]
+SH_OPS = ["slli", "srli", "srai"]
+BR_OPS = ["beq", "bne", "blt", "bge", "bltu", "bgeu"]
+BASE_REG = 3  # data pointer, never a destination
+DSTS = [r for r in range(1, 32) if r != BASE_REG]
+
+
+# program for one seed
+def gen(seed):
+    rng = random.Random(seed)
+    mode = "linear" if seed % 2 == 0 else "control"
+    n = rng.randint(24, 50)
+    written = set()
+    body = []
+
+    def rd():
+        return rng.choice(DSTS)
+
+    def rs():
+        return rng.randint(0, 31)
+
+    for i in range(n):
+        # no auipc or jal-link, they are base-dependent
+        if mode == "linear":
+            pool = ["r", "i", "sh", "lui", "sw"] + (["lw"] if written else [])
+        else:
+            pool = ["r", "i", "sh", "lui", "sw", "branch", "jal"]
+        kind = rng.choice(pool)
+
+        if kind == "r":
+            body.append(f"{rng.choice(R_OPS)} x{rd()}, x{rs()}, x{rs()}")
+        elif kind == "i":
+            body.append(f"{rng.choice(I_OPS)} x{rd()}, x{rs()}, {rng.randint(-2048, 2047)}")
+        elif kind == "sh":
+            body.append(f"{rng.choice(SH_OPS)} x{rd()}, x{rs()}, {rng.randint(0, 31)}")
+        elif kind == "lui":
+            body.append(f"lui x{rd()}, {rng.randint(0, 0xFFFFF)}")
+        elif kind == "sw":
+            word = rng.randint(0, DEPTH - 1)
+            written.add(word)
+            body.append(f"sw x{rs()}, {word * 4}(x{BASE_REG})")
+        elif kind == "lw":  # only from written words
+            word = rng.choice(sorted(written))
+            body.append(f"lw x{rd()}, {word * 4}(x{BASE_REG})")
+        elif kind == "branch":  # forward target only
+            tgt = rng.choice([f"L{k}" for k in range(i + 1, n)] + ["Ldone"])
+            body.append(f"{rng.choice(BR_OPS)} x{rs()}, x{rs()}, {tgt}")
+        elif kind == "jal":  # forward jump, no link
+            tgt = rng.choice([f"L{k}" for k in range(i + 1, n)] + ["Ldone"])
+            body.append(f"jal x0, {tgt}")
+
+    # base 0x80008000 clears the code in Spike
+    lines = ["        .section .text", "        .globl _start", "_start:",
+             f"        lui x{BASE_REG}, 0x80008"]
+    for i, insn in enumerate(body):
+        lines.append(f"L{i}: {insn}")
+    lines.append("Ldone: beq x0, x0, Ldone")  # park sentinel
+    return "\n".join(lines) + "\n", mode
+
+
+# build run compare
+def run_one(src):
+    dut_hex = os.path.join(BUILD, "prog.hex")
+    spike_elf = os.path.join(BUILD, "prog_spike.elf")
+    build_images(src, dut_hex, spike_elf)
+    dut = run_dut(dut_hex)
+    spike = run_spike(spike_elf, len(dut))
+    return compare(dut, spike)
+
+
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] == "--rand":  # random regression
+        count = int(sys.argv[2]) if len(sys.argv) >= 3 else 200
+        seed0 = int(sys.argv[3]) if len(sys.argv) >= 4 else 0
+        compile_monitor()
+        total = 0
+        for seed in range(seed0, seed0 + count):
+            asm, mode = gen(seed)
+            src = os.path.join(BUILD, "rand.s")
+            with open(src, "w") as f:
+                f.write(asm)
+            ok, detail = run_one(src)
+            if not ok:
+                fail = os.path.join(BUILD, f"fail_{seed}.s")  # reproducible seed
+                with open(fail, "w") as f:
+                    f.write(asm)
+                print(f"FAIL seed={seed} mode={mode}\n{detail}\nprogram saved to {fail}")
+                sys.exit(1)
+            total += detail
+        print(f"RANDOM PASS: {count} programs, {total} instructions matched Spike")
+        return
+
     if len(sys.argv) != 2:
-        sys.exit("usage: python3 tests/cosim.py <prog>")
-    prog = sys.argv[1]
+        sys.exit("usage: python3 tests/cosim.py <prog> | --rand [count] [seed0]")
+    prog = sys.argv[1]  # single program
     compile_monitor()
     src = os.path.join("tests", f"{prog}.s")
     dut_hex = os.path.join("tests", f"{prog}.hex")
