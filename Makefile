@@ -5,6 +5,7 @@
 #   make formal MOD=alu          run every SymbiYosys task in formal/$(MOD).sby; a FAIL exits nonzero
 #   make hex PROG=program        assemble tests/$(PROG).s -> tests/$(PROG).hex for $readmemh
 #   make dis PROG=program        disassemble the built elf (sanity-check the machine code)
+#   make cosim PROG=cosim1       lockstep-compare tests/cosim1.s against Spike (needs spike installed)
 #   make clean                   delete build artifacts (build/, *.vcd)
 
 # alu_pkg.sv must compile before any module that imports it
@@ -63,8 +64,12 @@ dis:
 	@test -n "$(PROG)" || { echo "usage: make dis PROG=<name>"; exit 1; }
 	$(RVDUMP) -d build/$(PROG).elf
 
+cosim:
+	@test -n "$(PROG)" || { echo "usage: make cosim PROG=<name>  (lockstep tests/$(PROG).s vs Spike)"; exit 1; }
+	python3 tests/cosim.py $(PROG)
+
 clean:
 	rm -rf build *.vcd sim_build results.xml
 
 .DEFAULT_GOAL := run
-.PHONY: run wave formal view view-formal hex dis clean
+.PHONY: run wave formal view view-formal hex dis cosim clean
