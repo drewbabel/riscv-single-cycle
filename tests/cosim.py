@@ -22,7 +22,7 @@ RTL = [os.path.join(ROOT, "rtl", "alu_pkg.sv")] + [  # package first
 ]
 
 RVGCC = "riscv64-elf-gcc"
-GCC_COMMON = ["-march=rv32i", "-mabi=ilp32", "-nostdlib", "-nostartfiles"]
+GCC_COMMON = ["-march=rv32i", "-mabi=ilp32", "-nostdlib", "-nostartfiles", "-Os"]
 SIM = os.path.join(BUILD, "cosim_sim")
 
 
@@ -212,9 +212,10 @@ def main():
 
     if len(sys.argv) != 2:
         sys.exit("usage: python3 tests/cosim.py <prog> | --rand [count] [seed0]")
-    prog = sys.argv[1]  # single program
+    prog = sys.argv[1]  # single program, assembly or C
     compile_monitor()
-    src = os.path.join("tests", f"{prog}.s")
+    src_c = os.path.join("tests", f"{prog}.c")
+    src = src_c if os.path.exists(src_c) else os.path.join("tests", f"{prog}.s")
     dut_hex = os.path.join("tests", f"{prog}.hex")
     spike_elf = os.path.join(BUILD, f"{prog}_spike.elf")
     build_images(src, dut_hex, spike_elf)

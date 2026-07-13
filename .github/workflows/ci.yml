@@ -67,5 +67,7 @@ jobs:
         run: |
           echo "/opt/spike/bin" >> "$GITHUB_PATH"
           echo "LD_LIBRARY_PATH=/opt/spike/lib" >> "$GITHUB_ENV"
+      - name: Compiled-C co-sim
+        run: python3 tests/cosim.py cprog
       - name: Randomized co-sim regression (500 programs)
         run: python3 tests/cosim.py --rand 500
