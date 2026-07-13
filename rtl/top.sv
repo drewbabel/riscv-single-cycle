@@ -12,18 +12,22 @@ module top #(
 
   logic [XLEN-1:0] instr;
   logic [XLEN-1:0] read_data;
+  logic      [3:0] store_wstrb;
+  logic [XLEN-1:0] store_data;
 
   riscv_single #(
       .XLEN(XLEN)
   ) riscv_single_inst (
-      .clk       (clk),
-      .rst_n     (rst_n),
-      .instr     (instr),
-      .read_data (read_data),
-      .pc        (pc),
-      .mem_write (mem_write),
-      .alu_result(alu_result),
-      .write_data(write_data)
+      .clk        (clk),
+      .rst_n      (rst_n),
+      .instr      (instr),
+      .read_data  (read_data),
+      .pc         (pc),
+      .mem_write  (mem_write),
+      .alu_result (alu_result),
+      .write_data (write_data),
+      .store_wstrb(store_wstrb),
+      .store_data (store_data)
   );
 
   imem #(
@@ -39,9 +43,9 @@ module top #(
       .DEPTH(DEPTH)
   ) dmem_inst (
       .clk(clk),
-      .we(mem_write),
+      .wstrb(store_wstrb),
       .addr(alu_result),
-      .wdata(write_data),
+      .wdata(store_data),
       .rdata(read_data)
   );
 

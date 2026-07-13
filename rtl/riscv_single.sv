@@ -10,7 +10,9 @@ module riscv_single
     output logic [XLEN-1:0] pc,
     output logic            mem_write,
     output logic [XLEN-1:0] alu_result,
-    output logic [XLEN-1:0] write_data
+    output logic [XLEN-1:0] write_data,
+    output logic      [3:0] store_wstrb,
+    output logic [XLEN-1:0] store_data
 );
 
   // control_unit to datapath wiring
@@ -23,6 +25,9 @@ module riscv_single
   logic                   pc_src;
   logic                   pc_target_src;
   logic zero, lt, ltu;
+  logic [XLEN-1:0] load_data;
+  logic      [7:0] ld_byte;
+  logic     [15:0] ld_half;
 
   control_unit control_unit_inst (
       .op           (instr[6:0]),
@@ -56,7 +61,7 @@ module riscv_single
       .pc_src       (pc_src),
       .pc_target_src(pc_target_src),
       .instr        (instr),
-      .read_data    (read_data),
+      .read_data    (load_data),
       .pc           (pc),
       .alu_result   (alu_result),
       .write_data   (write_data),
@@ -64,5 +69,40 @@ module riscv_single
       .lt           (lt),
       .ltu          (ltu)
   );
+
+  always_comb begin
+    ld_byte = read_data[{alu_result[1:0], 3'b000} +: 8];
+    ld_half = read_data[{alu_result[1], 4'b0000} +: 16];
+    case (instr[14:12])
+      3'b000:  load_data = {{24{ld_byte[7]}}, ld_byte};    // lb
+      3'b100:  load_data = {24'b0, ld_byte};               // lbu
+      3'b001:  load_data = {{16{ld_half[15]}}, ld_half};   // lh
+      3'b101:  load_data = {16'b0, ld_half};               // lhu
+      default: load_data = read_data;                      // lw
+    endcase
+  end
+
+  // Replicate rs2, strobe picks the lane
+  always_comb begin
+    store_data  = write_data;
+    store_wstrb = 4'h0;
+    if (mem_write) begin
+      case (instr[14:12])
+        3'b000: begin  // sb
+          store_data  = {4{write_data[7:0]}};
+          store_wstrb = 4'b0001 << alu_result[1:0];
+        end
+        3'b001: begin  // sh
+          store_data  = {2{write_data[15:0]}};
+          store_wstrb = 4'b0011 << alu_result[1:0];
+        end
+        3'b010: begin  // sw
+          store_data  = write_data;
+          store_wstrb = 4'b1111;
+        end
+        default: ;
+      endcase
+    end
+  end
 
 endmodule

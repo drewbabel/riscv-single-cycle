@@ -8,7 +8,7 @@ module dmem_tb ();
   int errors = 0;
 
   logic clk = 1'b0;
-  logic we;
+  logic [3:0] wstrb;
   logic [XLEN-1:0] addr;
   logic [XLEN-1:0] wdata;
   logic [XLEN-1:0] rdata;
@@ -22,7 +22,7 @@ module dmem_tb ();
       .DEPTH(DEPTH)
   ) dut (
       .clk  (clk),
-      .we   (we),
+      .wstrb(wstrb),
       .addr (addr),
       .wdata(wdata),
       .rdata(rdata)
@@ -32,18 +32,18 @@ module dmem_tb ();
     #1;
     addr  = a;
     wdata = data;
-    we    = 1'b1;
+    wstrb = 4'hF;
     @(posedge clk);
     @(negedge clk);
-    we = 1'b0;
+    wstrb = 4'h0;
   endtask
 
-  // Drive a cycle with we low, memory must not change
+  // Drive a cycle with wstrb zero, memory must not change
   task automatic write_blocked(input logic [XLEN-1:0] a, input logic [XLEN-1:0] data);
     #1;
     addr  = a;
     wdata = data;
-    we    = 1'b0;
+    wstrb = 4'h0;
     @(posedge clk);
     @(negedge clk);
   endtask
@@ -70,7 +70,7 @@ module dmem_tb ();
 
   // Reference model
   always @(posedge clk) begin
-    if (we) shadow[addr[AddrWidth+1:2]] <= wdata;
+    if (|wstrb) shadow[addr[AddrWidth+1:2]] <= wdata;
   end
 
   initial begin
