@@ -1,7 +1,3 @@
-// Shared types for the RV32I datapath.
-// Will grow into the core-wide package (opcodes, funct3/funct7 decode,
-// reg-file/CSR constants) once the modules that consume those exist
-
 package alu_pkg;
 
   typedef enum logic [3:0] {

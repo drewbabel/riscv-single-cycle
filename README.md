@@ -2,13 +2,15 @@
 
 [![CI](https://github.com/drewbabel/riscv-single-cycle/actions/workflows/ci.yml/badge.svg)](https://github.com/drewbabel/riscv-single-cycle/actions/workflows/ci.yml)
 
-A configurable single-cycle RV32I processor written in SystemVerilog.
+A configurable single-cycle RV32I processor with machine-mode traps, written in SystemVerilog.
 
-The core executes the RV32I base integer instruction set at one instruction per clock. The program counter addresses instruction memory, the `control_unit` decodes the fetched word combinationally, the register file supplies operands, the `alu` computes, and the ALU result, a loaded word, or the return address writes back, all within a single cycle. Because decode is combinational, the only sequential state is the `pc` register, the register file, and data memory.
+The core executes the RV32I base integer instruction set at one instruction per clock, extended with the Zicsr control registers, machine-mode traps, and a core-local timer. The program counter addresses instruction memory, the `control_unit` decodes the fetched word combinationally, the register file supplies operands, the `alu` computes, and the ALU result, a loaded word, a CSR value, or the return address writes back within the cycle. The only sequential state is the `pc` register, the register file, data memory, the CSR file, and the timer.
 
-Data memory is organized as 32-bit words and supports byte, halfword, and word accesses through per-byte write strobes and a load-extend stage. `control_decoder` maps each opcode to the datapath control lines, `alu_decoder` derives the ALU operation from `funct3` and `funct7`, and `extend` builds the I, S, B, U, and J immediates. The `datapath` wires the blocks together and holds the ALU-operand, write-back, and next-PC multiplexers that the control lines steer. Instruction memory is word-addressed and loads its image from a hex file.
+Data memory is organized as 32-bit words and supports byte, halfword, and word accesses through per-byte write strobes and a load-extend stage. `control_decoder` maps each opcode to the datapath control lines, `alu_decoder` derives the ALU operation from `funct3` and `funct7`, `extend` builds the I, S, B, U, and J immediates, and the `datapath` holds the ALU-operand, write-back, and next-PC multiplexers that the control lines steer.
 
-The design, testbenches, formal proofs, and co-simulation harness were written from scratch. A riscv-formal proof verifies the assembled core against the RISC-V specification, and Spike lockstep co-simulation confirms every instruction matches a reference simulator across hand-written and randomized programs.
+The `csr` block holds the machine-mode registers and the trap unit. On an exception or an enabled timer interrupt, the trap unit records the faulting program counter in `mepc` and the reason in `mcause`, then redirects the next-PC multiplexer to the `mtvec` handler ahead of any branch or sequential fetch. An `mret` restores the interrupt-enable stack and returns to `mepc`. The `clint` block raises the timer interrupt once its memory-mapped `mtime` reaches `mtimecmp`.
+
+The design, testbenches, formal proofs, and co-simulation harness were written from scratch. A riscv-formal proof under SymbiYosys checks the assembled core against the RISC-V specification, including the machine-mode traps and the Zicsr path, and Spike lockstep co-simulation confirms every retired instruction matches a reference simulator.
 
 ![Single-cycle datapath block diagram](docs/datapath_block.svg)
 
@@ -25,6 +27,7 @@ The design, testbenches, formal proofs, and co-simulation harness were written f
 |--------|-----------|-------|-------------|
 | `clk` | in | 1 | System clock |
 | `rst_n` | in | 1 | Synchronous active-low reset |
+| `timer_irq` | in | 1 | CLINT machine-timer interrupt |
 | `pc` | out | `XLEN` | Program counter of the fetched instruction |
 | `alu_result` | out | `XLEN` | ALU output, also the data memory address |
 | `write_data` | out | `XLEN` | Store data driven to data memory |
@@ -41,24 +44,43 @@ The design, testbenches, formal proofs, and co-simulation harness were written f
 | Branch (`BRANCH`) | `beq` `bne` `blt` `bge` `bltu` `bgeu` |
 | Jump | `jal` `jalr` |
 | Upper immediate | `lui` `auipc` |
+| System | `ecall` `ebreak` `mret` |
+| Zicsr | `csrrw` `csrrs` `csrrc` `csrrwi` `csrrsi` `csrrci` |
 
-Loads and stores support byte, halfword, and word widths. The `FENCE`, `ECALL`, `EBREAK`, and CSR instructions are not implemented, and misaligned accesses are not yet trapped.
+The `FENCE` instruction is a no-op, and the core runs entirely in machine mode.
+
+## Machine mode
+
+The core traps illegal instructions, `ecall`, `ebreak`, and misaligned instruction, load, and store addresses, and takes the CLINT timer interrupt when `mstatus` and `mie` enable it.
+
+| CSR | Purpose |
+|-----|---------|
+| `mstatus` | Current and prior interrupt-enable bits |
+| `mtvec` | Trap handler base address |
+| `mepc` | Faulting program counter |
+| `mcause` | Trap cause code |
+| `mtval` | Faulting address or value |
+| `mie` + `mip` | Interrupt enable and pending |
+| `mscratch` | Handler scratch word |
+| `mcycle` + `minstret` | 64-bit cycle and retired-instruction counters |
 
 ## Verification
 
-The riscv-formal proof wraps `riscv_single` in the RISC-V Formal Interface and checks every retired instruction against the RISC-V specification. The core does not yet implement traps, so the proof assumes aligned instruction fetches and data accesses. The machine-mode trap unit will add the misaligned cases. Run the proof with `bash formal/rvfi/run.sh`.
+The riscv-formal proof wraps `riscv_single` in the RISC-V Formal Interface and checks every retired instruction against the RISC-V specification under SymbiYosys, including the machine-mode traps, the Zicsr read and write path, and the misaligned instruction, load, and store cases. Run the proof with `bash formal/rvfi/run.sh`.
 
-Spike lockstep co-simulation runs the core against Spike and compares the register and memory write of every retired instruction, across hand-written programs and a randomized generator that exercises byte, halfword, and word accesses.
+Spike lockstep co-simulation runs the core against the Spike reference simulator and compares the register and memory write of every retired instruction, across hand-written programs and a randomized generator that exercises byte, halfword, and word accesses.
 
-Every module also has a self-checking testbench built on an independent reference model, and the `alu` carries an exhaustive SymbiYosys proof:
-- `result` matches an independent reference model for every operation
-- `zero`, `lt`, and `ltu` match the reference for every operand pair
+The `alu` carries an exhaustive SymbiYosys proof that its `result`, `zero`, `lt`, and `ltu` match an independent reference model over the full input space, and every module has a self-checking testbench, with the `csr`, `clint`, and timer paths driven through directed trap sequences.
 
 ## Results
 
 ![Arithmetic program waveform](docs/program_waveform.svg)
 
 ![Branch loop waveform](docs/loop_waveform.svg)
+
+A timer interrupt fires once `mtime` reaches `mtimecmp`, redirecting the core to the `mtvec` handler and returning through `mret`.
+
+![Machine timer trap waveform](docs/trap_waveform.svg)
 
 ## Building and running
 
@@ -82,12 +104,14 @@ Synthesized for the Digilent Basys 3 (Xilinx Artix-7). sv2v first converts the S
 |--------|------|------------|-------------|
 | `pc` | 0 | 32 | 0 |
 | `alu_decoder` | 5 | 0 | 0 |
-| `control_decoder` | 15 | 0 | 0 |
-| `control_unit` | 21 | 0 | 0 |
+| `control_unit` | 24 | 0 | 0 |
+| `control_decoder` | 30 | 0 | 0 |
 | `extend` | 31 | 0 | 0 |
-| `alu` | 492 | 0 | 22 |
-| `regfile` | 922 | 992 | 0 |
-| `riscv_single` | 1969 | 1045 | 38 |
+| `clint` | 218 | 128 | 22 |
+| `alu` | 497 | 0 | 22 |
+| `csr` | 752 | 384 | 32 |
+| `regfile` | 911 | 992 | 0 |
+| `riscv_single` | 2669 | 1418 | 70 |
 
 ### Tool versions
 

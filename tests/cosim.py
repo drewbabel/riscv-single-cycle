@@ -16,10 +16,11 @@ STORE_WIDTH = {0: 1, 1: 2, 2: 4}  # store funct3 to byte count
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD = os.path.join(ROOT, "build")
-RTL = [os.path.join(ROOT, "rtl", "alu_pkg.sv")] + [  # package first
+PKGS = ["alu_pkg.sv", "csr_pkg.sv"]
+RTL = [os.path.join(ROOT, "rtl", p) for p in PKGS] + [
     os.path.join(ROOT, "rtl", f)
     for f in sorted(os.listdir(os.path.join(ROOT, "rtl")))
-    if f.endswith(".sv") and f != "alu_pkg.sv"
+    if f.endswith(".sv") and f not in PKGS
 ]
 
 RVGCC = "riscv64-elf-gcc"

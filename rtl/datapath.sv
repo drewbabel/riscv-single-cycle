@@ -10,14 +10,21 @@ module datapath
     input  logic             [     1:0] alu_a_src,
     input  logic                        alu_src,
     input  logic             [     1:0] result_src,
+    input  logic                        csr_access,
+    input  logic             [XLEN-1:0] csr_rdata,
     input  alu_pkg::alu_op_e            alu_ctrl,
     input  logic                        pc_src,
     input  logic                        pc_target_src,
+    input  logic                        trap_taken,
+    input  logic             [XLEN-1:0] trap_vector,
+    input  logic                        mret_taken,
+    input  logic             [XLEN-1:0] mepc_out,
     input  logic             [XLEN-1:0] instr,
     input  logic             [XLEN-1:0] read_data,
     output logic             [XLEN-1:0] pc,
     output logic             [XLEN-1:0] alu_result,
     output logic             [XLEN-1:0] write_data,
+    output logic             [XLEN-1:0] rs1_data,
     output logic                        zero,
     output logic                        lt,
     output logic                        ltu
@@ -28,15 +35,14 @@ module datapath
 `endif
 );
 
-  logic [XLEN-1:0] pc_next;  // pc_src mux output -> pc.pc_next
-  logic [XLEN-1:0] pc_plus4;  // pc + 4
-  logic [XLEN-1:0] pc_target;  // pc_target_src mux output (branch/jal/jalr dest)
-  logic [XLEN-1:0] rs1_data;  // regfile.rdata1
-  logic [XLEN-1:0] rs2_data;  // regfile.rdata2
-  logic [XLEN-1:0] imm_ext;  // extend output
-  logic [XLEN-1:0] src_a;  // alu_a_src mux output -> alu.a
-  logic [XLEN-1:0] src_b;  // alu_src   mux output -> alu.b
-  logic [XLEN-1:0] result;  // result_src mux output -> regfile.wdata
+  logic [XLEN-1:0] pc_next;
+  logic [XLEN-1:0] pc_plus4;
+  logic [XLEN-1:0] pc_target;
+  logic [XLEN-1:0] rs2_data;
+  logic [XLEN-1:0] imm_ext;
+  logic [XLEN-1:0] src_a;
+  logic [XLEN-1:0] src_b;
+  logic [XLEN-1:0] result;
 
   pc #(
       .XLEN(XLEN),
@@ -99,15 +105,25 @@ module datapath
     src_b = alu_src ? imm_ext : rs2_data;
 
     // result
-    case (result_src)
-      2'd0: result = alu_result;
-      2'd1: result = read_data;
-      2'd2: result = pc_plus4;
-      default: result = '0;
-    endcase
+    if (csr_access) begin
+      result = csr_rdata;
+    end else begin
+      case (result_src)
+        2'd0: result = alu_result;
+        2'd1: result = read_data;
+        2'd2: result = pc_plus4;
+        default: result = '0;
+      endcase
+    end
 
-    pc_target = (pc_target_src) ? alu_result : pc + imm_ext;
-    pc_next   = (pc_src) ? pc_target : pc_plus4;
+    pc_target = (pc_target_src) ? {alu_result[XLEN-1:1], 1'b0} : pc + imm_ext;
+    if (trap_taken) begin
+      pc_next = trap_vector;
+    end else if (mret_taken) begin
+      pc_next = mepc_out;
+    end else begin
+      pc_next = (pc_src) ? pc_target : pc_plus4;
+    end
   end
 
 `ifdef RISCV_FORMAL

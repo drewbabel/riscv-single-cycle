@@ -8,8 +8,9 @@
 #   make cosim PROG=cosim1       lockstep-compare tests/cosim1.s against Spike (needs spike installed)
 #   make clean                   delete build artifacts (build/, *.vcd)
 
-# alu_pkg.sv must compile before any module that imports it
-RTL := $(wildcard rtl/alu_pkg.sv) $(filter-out rtl/alu_pkg.sv,$(wildcard rtl/*.sv))
+# packages must compile before any module that imports them
+PKGS := rtl/alu_pkg.sv rtl/csr_pkg.sv
+RTL := $(PKGS) $(filter-out $(PKGS),$(wildcard rtl/*.sv))
 TB  := tb/$(MOD)_tb.sv
 SIM := build/sim
 VCD := $(MOD)_tb.vcd
@@ -20,7 +21,7 @@ FORMAL := formal/$(MOD).sby
 RVGCC   := riscv64-elf-gcc
 RVCOPY  := riscv64-elf-objcopy
 RVDUMP  := riscv64-elf-objdump
-RVFLAGS := -march=rv32i -mabi=ilp32 -nostdlib -nostartfiles -T tests/link.ld
+RVFLAGS := -march=rv32i_zicsr -mabi=ilp32 -nostdlib -nostartfiles -T tests/link.ld
 
 run:
 	@test -n "$(MOD)" || { echo "usage: make MOD=<module>  (e.g. MOD=alu)"; exit 1; }

@@ -18,8 +18,8 @@ cp "$HERE/wrapper.sv" "$DST/wrapper.sv"
 cp "$HERE/checks.cfg" "$DST/checks.cfg"
 
 RTL=(
-  alu_pkg alu extend pc regfile imem dmem
-  alu_decoder control_decoder control_unit datapath riscv_single
+  alu_pkg csr_pkg alu extend pc regfile imem dmem
+  alu_decoder control_decoder control_unit csr datapath riscv_single
 )
 SRC=()
 for m in "${RTL[@]}"; do SRC+=("$ROOT/rtl/$m.sv"); done

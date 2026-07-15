@@ -1,15 +1,23 @@
-module control_decoder (
-    input  logic [6:0] op,
-    output logic       reg_write,
-    output logic [2:0] imm_src,
-    output logic [1:0] alu_a_src,
-    output logic       pc_target_src,
-    output logic       alu_src,
-    output logic       mem_write,
-    output logic [1:0] result_src,
-    output logic       branch,
-    output logic       jump,
-    output logic [1:0] alu_op
+module control_decoder
+  import csr_pkg::*;
+(
+    input  logic [ 6:0] op,
+    input  logic [ 2:0] funct3,
+    input  logic [11:0] funct12,
+    output logic        reg_write,
+    output logic [ 2:0] imm_src,
+    output logic [ 1:0] alu_a_src,
+    output logic        pc_target_src,
+    output logic        alu_src,
+    output logic        mem_write,
+    output logic [ 1:0] result_src,
+    output logic        branch,
+    output logic        jump,
+    output logic [ 1:0] alu_op,
+    output logic        csr_access,
+    output logic        is_ecall,
+    output logic        is_ebreak,
+    output logic        is_mret
 );
 
   // opcodes
@@ -45,16 +53,20 @@ module control_decoder (
   localparam logic [1:0] AluOpFunct = 2'b10;  // decode from funct3/funct7
 
   always_comb begin
-    reg_write  = 1'b0;
-    imm_src    = ImmI;
-    alu_a_src  = SrcARs1;
+    reg_write     = 1'b0;
+    imm_src       = ImmI;
+    alu_a_src     = SrcARs1;
     pc_target_src = 1'b0;
-    alu_src    = 1'b0;
-    mem_write  = 1'b0;
-    result_src = ResAlu;
-    branch     = 1'b0;
-    jump       = 1'b0;
-    alu_op     = AluOpAdd;
+    alu_src       = 1'b0;
+    mem_write     = 1'b0;
+    result_src    = ResAlu;
+    branch        = 1'b0;
+    jump          = 1'b0;
+    alu_op        = AluOpAdd;
+    csr_access    = 1'b0;
+    is_ecall      = 1'b0;
+    is_ebreak     = 1'b0;
+    is_mret       = 1'b0;
 
     case (op)
       OpcodeOp: begin  // add, sub, and, or, xor, sll, srl, sra, slt, sltu
@@ -100,12 +112,12 @@ module control_decoder (
       end
 
       OpcodeJalr: begin  // jalr
-        reg_write  = 1'b1;
-        imm_src    = ImmI;
-        alu_src    = 1'b1;
-        result_src = ResPc4;
-        jump       = 1'b1;
-        alu_op     = AluOpAdd;  // alu computes rs1 + imm as the target
+        reg_write     = 1'b1;
+        imm_src       = ImmI;
+        alu_src       = 1'b1;
+        result_src    = ResPc4;
+        jump          = 1'b1;
+        alu_op        = AluOpAdd;  // alu computes rs1 + imm as the target
         pc_target_src = 1'b1;  // pc target comes from the alu, not pc + imm
       end
 
@@ -125,17 +137,28 @@ module control_decoder (
         alu_op    = AluOpAdd;
       end
 
+      OpcodeSystem: begin
+        if (funct3 == Funct3Priv) begin
+          is_ecall  = (funct12 == Funct12Ecall);
+          is_ebreak = (funct12 == Funct12Ebreak);
+          is_mret   = (funct12 == Funct12Mret);
+        end else begin
+          reg_write  = 1'b1;
+          csr_access = 1'b1;
+        end
+      end
+
       default: begin
-        reg_write  = 1'b0;
-        imm_src    = 3'bxxx;
-        alu_a_src  = 2'bxx;
+        reg_write     = 1'b0;
+        imm_src       = 3'bxxx;
+        alu_a_src     = 2'bxx;
         pc_target_src = 1'bx;
-        alu_src    = 1'bx;
-        mem_write  = 1'b0;
-        result_src = 2'bxx;
-        branch     = 1'b0;
-        jump       = 1'b0;
-        alu_op     = 2'bxx;
+        alu_src       = 1'bx;
+        mem_write     = 1'b0;
+        result_src    = 2'bxx;
+        branch        = 1'b0;
+        jump          = 1'b0;
+        alu_op        = 2'bxx;
       end
     endcase
   end

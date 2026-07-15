@@ -22,12 +22,12 @@ pitch = lane_h + gap
 
 fig, ax = plt.subplots(figsize=(13, 0.62 * nlanes + 1.4))
 SIG, GREY = '#08306b', '#dfe6ee'
-LABEL_X = -0.2
+LABEL_X = -0.5
 
 def base_of(k): return (nlanes - 1 - k) * pitch
 
 def name_label(base, name):
-    ax.text(LABEL_X, base + lane_h / 2, name, ha='right', va='center',
+    ax.text(LABEL_X, base + lane_h / 2, name, ha='center', va='center',
             fontsize=11, family='monospace')
 
 def draw_bus(base, vals, fmt):
@@ -55,7 +55,7 @@ for k, (name, kind, vals, fmt) in enumerate(lanes):
         ax.step(range(N + 1), [base + max(v, 0) * lane_h for v in seg], where='post',
                 color=SIG, lw=1.8, zorder=3)
 
-ax.set_xlim(-1.1, N)
+ax.set_xlim(-1.0, N)
 ax.set_ylim(-0.4, base_of(0) + lane_h + 0.4)
 ax.set_yticks([])
 ax.set_xlabel('clock cycles', fontsize=10)
@@ -64,7 +64,7 @@ ax.set_xticklabels([str(i) for i in range(N)], fontsize=9)
 for sp in ('top', 'right', 'left'):
     ax.spines[sp].set_visible(False)
 ax.spines['bottom'].set_bounds(0, N)
-ax.set_title('Single-cycle core: arithmetic program (XLEN = 32)', fontsize=13, pad=16)
+ax.set_title('Arithmetic Program', fontsize=13, pad=16)
 plt.tight_layout()
 plt.savefig('program_waveform.svg', bbox_inches='tight', facecolor='white')
 print('wrote program_waveform.svg; rows', N)

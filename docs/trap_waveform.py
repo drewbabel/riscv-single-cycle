@@ -1,30 +1,31 @@
-# renders loop waveform svg
+# renders trap waveform svg
 import csv
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-rows = list(csv.DictReader(open('loop_wave.csv')))
+rows = list(csv.DictReader(open('trap_wave.csv')))
+rows = rows[24:41]  # window on the timer-interrupt entry
 def col(n): return [int(r[n]) for r in rows]
-pc, instr = col('pc'), col('instr')
-pcsrc = col('pc_src')
-x1, x2 = col('x1'), col('x2')
-mw = col('mem_write')
+pc = col('pc')
+tirq = col('timer_irq')
+ttaken = col('trap_taken')
+mcause, mepc = col('mcause'), col('mepc')
 N = len(rows)
 
-HEX = lambda v: f'0x{v & 0xFFFFFFFF:08X}'
-DEC = lambda v: f'{v}'
-lanes = [('pc', 'bus', pc, DEC),
-         ('pc_src', 'bit', pcsrc, None),
-         ('x1', 'bus', x1, DEC), ('x2', 'bus', x2, DEC),
-         ('mem_write', 'bit', mw, None)]
+HEX = lambda v: f'0x{v & 0xFFFFFFFF:X}'
+lanes = [('pc', 'bus', pc, HEX),
+         ('timer_irq', 'bit', tirq, None),
+         ('trap_taken', 'bit', ttaken, None),
+         ('mcause', 'bus', mcause, HEX),
+         ('mepc', 'bus', mepc, HEX)]
 nlanes = len(lanes)
 lane_h, gap = 0.72, 0.55
 pitch = lane_h + gap
 
 fig, ax = plt.subplots(figsize=(13, 0.62 * nlanes + 1.4))
 SIG, GREY = '#08306b', '#dfe6ee'
-LABEL_X = -1.6
+LABEL_X = -1.5
 
 def base_of(k): return (nlanes - 1 - k) * pitch
 
@@ -57,17 +58,17 @@ for k, (name, kind, vals, fmt) in enumerate(lanes):
         ax.step(range(N + 1), [base + max(v, 0) * lane_h for v in seg], where='post',
                 color=SIG, lw=1.8, zorder=3)
 
-ax.set_xlim(-3.4, N)
+ax.set_xlim(-3.0, N)
 ax.set_ylim(-0.4, base_of(0) + lane_h + 0.4)
 ax.set_yticks([])
 ax.set_xlabel('clock cycles', fontsize=10)
 xt = list(range(0, N, 4))
 ax.set_xticks([t + 0.5 for t in xt])
-ax.set_xticklabels([str(t) for t in xt], fontsize=9)
+ax.set_xticklabels([str(t + 24) for t in xt], fontsize=9)
 for sp in ('top', 'right', 'left'):
     ax.spines[sp].set_visible(False)
 ax.spines['bottom'].set_bounds(0, N)
-ax.set_title('Branch Loop', fontsize=13, pad=16)
+ax.set_title('Machine Timer Trap', fontsize=13, pad=16)
 plt.tight_layout()
-plt.savefig('loop_waveform.svg', bbox_inches='tight', facecolor='white')
-print('wrote loop_waveform.svg; rows', N)
+plt.savefig('trap_waveform.svg', bbox_inches='tight', facecolor='white')
+print('wrote trap_waveform.svg; rows', N)

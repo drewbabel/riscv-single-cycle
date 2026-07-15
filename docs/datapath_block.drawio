@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" scale="2" border="10">
     <diagram name="datapath" id="datapath">
-        <mxGraphModel dx="944" dy="837" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1720" pageHeight="900" background="#ffffff" math="0" shadow="0">
+        <mxGraphModel dx="797" dy="364" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1720" pageHeight="900" background="#ffffff" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -23,7 +23,7 @@
                     <mxGeometry x="620" y="370" width="170" height="132" as="geometry"/>
                 </mxCell>
                 <mxCell id="extend" value="immediate&#xa;extend" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=middle;fontSize=16;" parent="1" vertex="1">
-                    <mxGeometry x="620" y="590" width="170" height="72" as="geometry"/>
+                    <mxGeometry x="620" y="523" width="170" height="72" as="geometry"/>
                 </mxCell>
                 <mxCell id="alu" value="ALU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=middle;fontSize=16;" parent="1" vertex="1">
                     <mxGeometry x="900" y="384" width="150" height="112" as="geometry"/>
@@ -67,7 +67,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="e-instr" value="instr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=1;exitY=0.5;entryX=0;entryY=0.44;spacingTop=0;spacingBottom=4;" parent="1" source="imem" target="regfile" edge="1">
-                    <mxGeometry x="-0.0051" y="8" relative="1" as="geometry">
+                    <mxGeometry x="-0.2869" y="7" relative="1" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
@@ -76,20 +76,15 @@
                         <mxPoint x="563" y="428" as="sourcePoint"/>
                         <mxPoint x="640.5" y="290.0000000000002" as="targetPoint"/>
                         <Array as="points">
-                            <mxPoint x="563" y="330"/>
-                            <mxPoint x="562" y="330"/>
-                            <mxPoint x="562" y="250"/>
+                            <mxPoint x="560" y="428"/>
+                            <mxPoint x="560" y="250"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-instr-ext" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;entryX=0;entryY=0.5;" parent="1" target="extend" edge="1">
+                <mxCell id="e-instr-ext" style="rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;entryX=0;entryY=0.5;" parent="1" target="extend" edge="1">
                     <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="578" y="428" as="sourcePoint"/>
+                        <mxPoint x="570" y="559" as="sourcePoint"/>
                         <mxPoint x="620" y="626" as="targetPoint"/>
-                        <Array as="points">
-                            <mxPoint x="600" y="428"/>
-                            <mxPoint x="600" y="626"/>
-                        </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="e-rs1" value="rs1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=1;exitY=0.3;entryX=0;entryY=0.24;spacingBottom=3;" parent="1" source="regfile" target="alu" edge="1">
@@ -112,7 +107,7 @@
                 <mxCell id="e-imm" value="imm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=1;exitY=0.5;entryX=0;entryY=0.86;" parent="1" source="extend" target="alu" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="858" y="626"/>
+                            <mxPoint x="858" y="559"/>
                             <mxPoint x="858" y="480"/>
                         </Array>
                         <mxPoint y="-8" as="offset"/>
@@ -165,12 +160,13 @@
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-wb" value="write-back" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=0.5;exitY=1;entryX=0;entryY=0.85;spacingBottom=0;spacingLeft=250;" parent="1" source="resmux" target="regfile" edge="1">
+                <mxCell id="e-wb" value="write-back" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=0.5;exitY=1;entryX=-0.004;entryY=0.604;spacingBottom=0;spacingLeft=250;entryDx=0;entryDy=0;entryPerimeter=0;jumpStyle=arc;" parent="1" source="resmux" target="regfile" edge="1">
                     <mxGeometry x="-0.0443" y="-2" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1295" y="769"/>
-                            <mxPoint x="568" y="769"/>
-                            <mxPoint x="568" y="482"/>
+                            <mxPoint x="595" y="769"/>
+                            <mxPoint x="595" y="449"/>
+                            <mxPoint x="619" y="449"/>
                         </Array>
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -181,24 +177,23 @@
                         <mxPoint x="225" y="310" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-pc4" value="pc + 4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;" parent="1" edge="1">
+                <mxCell id="e-pc4" value="pc + 4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" parent="1" edge="1" target="pcmux">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="330" y="428" as="sourcePoint"/>
-                        <mxPoint x="249" y="274" as="targetPoint"/>
+                        <mxPoint x="255" y="274" as="targetPoint"/>
                         <Array as="points">
                             <mxPoint x="330" y="218"/>
-                            <mxPoint x="249" y="218"/>
+                            <mxPoint x="255" y="218"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e-target" value="branch/jump target" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;jumpStyle=arc;jumpSize=8;" parent="1" edge="1">
+                <mxCell id="e-target" value="branch/jump target" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;jumpStyle=arc;jumpSize=8;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" edge="1" target="pcmux">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="1330" y="440" as="sourcePoint"/>
                         <mxPoint x="201" y="274" as="targetPoint"/>
                         <Array as="points">
                             <mxPoint x="1330" y="150"/>
-                            <mxPoint x="201" y="150"/>
-                            <mxPoint x="201" y="274"/>
+                            <mxPoint x="225" y="150"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
@@ -253,7 +248,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="e-wdata" value="wdata" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" target="dmem" edge="1">
-                    <mxGeometry x="-0.0149" relative="1" as="geometry">
+                    <mxGeometry x="0.2252" relative="1" as="geometry">
                         <mxPoint x="1074" y="731" as="sourcePoint"/>
                         <mxPoint x="1037" y="696" as="targetPoint"/>
                         <mxPoint as="offset"/>
@@ -285,6 +280,50 @@
                 </mxCell>
                 <mxCell id="busw-wd" value="XLEN" style="text;html=1;align=center;fontStyle=2;fontSize=13;fillColor=none;strokeColor=none;" parent="1" vertex="1">
                     <mxGeometry x="1505" y="698" width="60" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="clint" value="CLINT&#xa;timer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=middle;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="170" y="655" width="135" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="csr" value="CSR /&#xa;trap unit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=middle;fontSize=16;" parent="1" vertex="1">
+                    <mxGeometry x="378" y="650" width="143" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-timerirq" value="timer_irq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" parent="1" source="clint" target="csr" edge="1">
+                    <mxGeometry x="0.0137" y="13" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-instr-csr" value="instr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;entryX=0.8;entryY=0;spacingRight=1;" parent="1" target="csr" edge="1">
+                    <mxGeometry x="-0.0654" relative="1" as="geometry">
+                        <mxPoint x="570" y="428" as="sourcePoint"/>
+                        <mxPoint x="570" y="650" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="560" y="428"/>
+                            <mxPoint x="560" y="560"/>
+                            <mxPoint x="492" y="560"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-trap" value="trap / mret" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=0.25;exitY=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitDx=0;exitDy=0;" parent="1" source="csr" target="pcmux" edge="1">
+                    <mxGeometry x="-0.4552" y="-11" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="414" y="585"/>
+                            <mxPoint x="158" y="585"/>
+                            <mxPoint x="158" y="236"/>
+                            <mxPoint x="195" y="236"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-csrread" value="csr read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000;strokeWidth=1.5;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;fontStyle=2;fontSize=13;exitX=1;exitY=0.5;entryX=0;entryY=0.75;jumpStyle=arc;jumpSize=8;entryDx=0;entryDy=0;" parent="1" source="csr" target="resmux" edge="1">
+                    <mxGeometry x="-0.0012" y="9" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="521" y="718"/>
+                            <mxPoint x="1184" y="718"/>
+                            <mxPoint x="1184" y="643"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
                 </mxCell>
             </root>
         </mxGraphModel>
