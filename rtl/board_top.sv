@@ -31,6 +31,14 @@ module board_top #(
   logic            gpio_sel;
   logic [    15:0] led_reg;
 
+  logic            core_rst_n;
+  logic            loading;
+  logic            boot_we;
+  logic [XLEN-1:0] boot_waddr;
+  logic [XLEN-1:0] boot_wdata;
+  logic [     7:0] rx_byte;
+  logic            rx_valid_w;
+
   // Divided core clock
   logic core_clk;
 `ifdef FPGA_DIVCLK
@@ -49,6 +57,9 @@ module board_top #(
   assign rst_n = ~rst;
 `endif
 
+  // Held in reset during load
+  assign core_rst_n = rst_n & ~loading;
+
   assign clint_sel  = alu_result[31:24] == ClintTag;
   assign gpio_sel   = alu_result[31:24] == GpioTag;
   assign read_data  = gpio_sel ? gpio_rdata : clint_sel ? clint_rdata : dmem_rdata;
@@ -57,17 +68,41 @@ module board_top #(
   assign gpio_rdata = alu_result[2] ? {16'b0, sw} : {16'b0, led_reg};
   assign led        = led_reg;
   always_ff @(posedge core_clk) begin
-    if (!rst_n) led_reg <= '0;
+    if (!core_rst_n) led_reg <= '0;
     else if (gpio_sel && !alu_result[2] && |store_wstrb) led_reg <= store_data[15:0];
   end
 
   assign uart_tx = 1'b1;  // Idle high
 
+  uart_rx #(
+      .CLK_FREQ_HZ(12_500_000)
+  ) uart_rx_inst (
+      .clk      (core_clk),
+      .rst_n    (rst_n),
+      .rx_serial(uart_rx),
+      .rx_data  (rx_byte),
+      .rx_valid (rx_valid_w),
+      .rx_error ()
+  );
+
+  boot_loader #(
+      .XLEN(XLEN)
+  ) boot_loader_inst (
+      .clk     (core_clk),
+      .rst_n   (rst_n),
+      .rx_valid(rx_valid_w),
+      .rx_data (rx_byte),
+      .we      (boot_we),
+      .waddr   (boot_waddr),
+      .wdata   (boot_wdata),
+      .loading (loading)
+  );
+
   riscv_single #(
       .XLEN(XLEN)
   ) riscv_single_inst (
       .clk        (core_clk),
-      .rst_n      (rst_n),
+      .rst_n      (core_rst_n),
       .instr      (instr),
       .read_data  (read_data),
       .timer_irq  (timer_irq),
@@ -83,6 +118,10 @@ module board_top #(
       .XLEN (XLEN),
       .DEPTH(DEPTH)
   ) imem_inst (
+      .clk  (core_clk),
+      .we   (boot_we),
+      .waddr(boot_waddr),
+      .wdata(boot_wdata),
       .addr (pc),
       .instr(instr)
   );
@@ -102,7 +141,7 @@ module board_top #(
       .XLEN(XLEN)
   ) clint_inst (
       .clk      (core_clk),
-      .rst_n    (rst_n),
+      .rst_n    (core_rst_n),
       .sel      (clint_sel),
       .wstrb    (store_wstrb),
       .addr     (alu_result),

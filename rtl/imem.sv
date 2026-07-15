@@ -3,7 +3,11 @@ module imem #(
     parameter int DEPTH = 64,
     localparam int AddrWidth = $clog2(DEPTH)
 ) (
-    input  logic [XLEN-1:0] addr,
+    input logic clk,
+    input logic we,
+    input logic [XLEN-1:0] waddr,
+    input logic [XLEN-1:0] wdata,
+    input logic [XLEN-1:0] addr,
     output logic [XLEN-1:0] instr
 );
 
@@ -15,5 +19,9 @@ module imem #(
 
   // 2 bits = divide by 4
   assign instr = mem[addr[AddrWidth+1:2]];
+
+  always_ff @(posedge clk) begin
+    if (we) mem[waddr[AddrWidth+1:2]] <= wdata;
+  end
 
 endmodule
