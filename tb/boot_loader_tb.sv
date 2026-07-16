@@ -24,6 +24,7 @@ module boot_loader_tb ();
       .XLEN(XLEN)
   ) dut (
       .clk     (clk),
+      .core_en (1'b1),
       .rst_n   (rst_n),
       .rx_valid(rx_valid),
       .rx_data (rx_data),
@@ -68,7 +69,7 @@ module boot_loader_tb ();
   endtask  // Automatic
 
   task automatic load_data();
-    send_byte(data_cnt);
+    send_word({24'd0, data_cnt});
     foreach (prog[i]) send_word(prog[i]);
   endtask  // Automatic
 

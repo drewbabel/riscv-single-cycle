@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Stream a hex image to the serial bootloader
+# Stream hex to bootloader
 # python3 tests/send_prog.py <serial-port> <hexfile>
 
 import sys
@@ -19,10 +19,10 @@ def load_words(path):
 def main():
     port, hexfile = sys.argv[1], sys.argv[2]
     words = load_words(hexfile)
-    if not 1 <= len(words) <= 64:
-        sys.exit(f"word count {len(words)} out of range 1..64")
-    ser = serial.Serial(port, 115200, timeout=1)
-    ser.write(bytes([len(words)]))  # count byte
+    if not 1 <= len(words) <= 16384:
+        sys.exit(f"word count {len(words)} out of range 1..16384")
+    ser = serial.Serial(port, 28800, timeout=1)
+    ser.write(len(words).to_bytes(4, "little"))  # 4-byte count, LSB-first
     for w in words:
         ser.write(w.to_bytes(4, "little"))  # LSB-first
     ser.flush()
