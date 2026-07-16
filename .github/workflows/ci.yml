@@ -17,9 +17,33 @@ jobs:
           shopt -s nullglob
           for tb in tb/*_tb.sv; do
             mod=$(basename "$tb" _tb.sv)
-            if [ "$mod" = freertos_boot ]; then echo "== skip $mod (needs FreeRTOS image) =="; continue; fi
+            case "$mod" in
+              freertos_boot) echo "== skip $mod (needs FreeRTOS image) =="; continue;;
+              prog) echo "== skip $mod (driven by the selfcheck job) =="; continue;;
+            esac
             echo "== $mod =="
             make MOD="$mod"
+          done
+
+  selfcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus Verilog and RISC-V toolchain
+        run: |
+          sudo grep -rlZ packages.microsoft.com /etc/apt/sources.list.d/ 2>/dev/null | sudo xargs -0 -r rm -f
+          sudo apt-get update
+          sudo apt-get install -y iverilog gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+      - name: Alias toolchain to riscv64-elf-*
+        run: |
+          for t in gcc objcopy; do
+            sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" /usr/local/bin/riscv64-elf-$t
+          done
+      - name: Run self-checking assembly programs
+        run: |
+          for p in trap_annul; do
+            echo "== $p =="
+            make prog PROG="$p"
           done
 
   formal:
@@ -50,6 +74,10 @@ jobs:
           curl -sL https://github.com/zachjs/sv2v/releases/download/v0.0.13/sv2v-Linux.zip -o sv2v.zip
           unzip -j sv2v.zip -d "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Clone riscv-formal
+        run: |
+          git clone https://github.com/YosysHQ/riscv-formal.git
+          git -C riscv-formal checkout 2bd7410
       - name: Split checks into groups
         id: list
         env:
@@ -76,6 +104,10 @@ jobs:
           curl -sL https://github.com/zachjs/sv2v/releases/download/v0.0.13/sv2v-Linux.zip -o sv2v.zip
           unzip -j sv2v.zip -d "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Clone riscv-formal
+        run: |
+          git clone https://github.com/YosysHQ/riscv-formal.git
+          git -C riscv-formal checkout 2bd7410
       - name: Prove the group
         env:
           RISCV_FORMAL_DIR: ${{ github.workspace }}/riscv-formal
@@ -120,7 +152,7 @@ jobs:
 
   ci-gate:
     if: always()
-    needs: [testbenches, formal, core-formal-list, core-formal, cosim]
+    needs: [testbenches, selfcheck, formal, core-formal-list, core-formal, cosim]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all CI jobs succeeded

@@ -46,37 +46,38 @@ module riscv_single
   logic [6:0] opcode;
   assign opcode = instr[6:0];
 
-  logic                        reg_write;
-  logic                        reg_write_gated;
-  logic             [     2:0] imm_src;
-  logic             [     1:0] alu_a_src;
-  logic                        alu_src;
-  logic             [     1:0] result_src;
-  alu_pkg::alu_op_e            alu_ctrl;
-  logic                        pc_src;
-  logic                        pc_target_src;
-  logic                        zero;
-  logic                        lt;
-  logic                        ltu;
-  logic             [XLEN-1:0] load_data;
-  logic             [XLEN-1:0] rs1_data;
-  logic             [XLEN-1:0] imm_ext;
-  logic             [XLEN-1:0] csr_rdata;
-  logic                        csr_access;
-  logic                        is_ecall;
-  logic                        is_ebreak;
-  logic                        is_mret;
-  logic                        exc_illegal;
-  logic                        exc_instr_misaligned;
-  logic                        exc_load_misaligned;
-  logic                        exc_store_misaligned;
-  logic             [XLEN-1:0] pc_target;
-  logic                        trap_taken;
-  logic             [XLEN-1:0] trap_vector;
-  logic                        mret_taken;
-  logic             [XLEN-1:0] mepc_out;
-  logic             [     7:0] ld_byte;
-  logic             [    15:0] ld_half;
+  logic mem_write_raw;
+  logic reg_write;
+  logic reg_write_gated;
+  logic [2:0] imm_src;
+  logic [1:0] alu_a_src;
+  logic alu_src;
+  logic [1:0] result_src;
+  alu_pkg::alu_op_e alu_ctrl;
+  logic pc_src;
+  logic pc_target_src;
+  logic zero;
+  logic lt;
+  logic ltu;
+  logic [XLEN-1:0] load_data;
+  logic [XLEN-1:0] rs1_data;
+  logic [XLEN-1:0] imm_ext;
+  logic [XLEN-1:0] csr_rdata;
+  logic csr_access;
+  logic is_ecall;
+  logic is_ebreak;
+  logic is_mret;
+  logic exc_illegal;
+  logic exc_instr_misaligned;
+  logic exc_load_misaligned;
+  logic exc_store_misaligned;
+  logic [XLEN-1:0] pc_target;
+  logic trap_taken;
+  logic [XLEN-1:0] trap_vector;
+  logic mret_taken;
+  logic [XLEN-1:0] mepc_out;
+  logic [7:0] ld_byte;
+  logic [15:0] ld_half;
 
   assign csr_access = (opcode == OpcodeSystem) && (funct3 != Funct3Priv);
   assign is_ecall = (opcode == OpcodeSystem) && (funct3 == Funct3Priv) && (funct12 == Funct12Ecall);
@@ -125,7 +126,7 @@ module riscv_single
       .alu_a_src    (alu_a_src),
       .pc_target_src(pc_target_src),
       .alu_src      (alu_src),
-      .mem_write    (mem_write),
+      .mem_write    (mem_write_raw),
       .result_src   (result_src),
       .pc_src       (pc_src),
       .alu_ctrl     (alu_ctrl)
@@ -183,8 +184,6 @@ module riscv_single
 `endif
   );
 
-  assign reg_write_gated = reg_write && !trap_taken;
-
   datapath #(
       .XLEN(XLEN)
   ) datapath_inst (
@@ -219,6 +218,9 @@ module riscv_single
       .dbg_rd_wdata (dbg_rd_wdata)
 `endif
   );
+
+  assign reg_write_gated = reg_write && !trap_taken;
+  assign mem_write = mem_write_raw && !trap_taken;
 
   always_comb begin
     ld_byte = read_data[{alu_result[1:0], 3'b000}+:8];

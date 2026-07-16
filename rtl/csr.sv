@@ -71,6 +71,7 @@ module csr
 
   logic [XLEN-1:0] csr_wsrc;
   logic [XLEN-1:0] csr_wdata;
+  logic            csr_write_en;
 
   assign csr_wsrc = (funct3[2]) ? {{(XLEN - 5) {1'b0}}, zimm} : rs1_data;
   always_comb begin
@@ -84,6 +85,9 @@ module csr
   assign trap_taken  = exc_illegal | exc_ecall | exc_ebreak | exc_instr_misaligned
                         | exc_load_misaligned | exc_store_misaligned
                         | (timer_irq & mstatus[MstatusMie] & mie[Mtie]);
+  // Reject if trap, or if set/clear with zero source
+  assign csr_write_en = csr_access && !trap_taken && 
+                        !((funct3[1:0] == 2'b10 || funct3[1:0] == 2'b11) && (csr_wsrc == '0));
   assign trap_vector = {mtvec[31:2], 2'b00};  // Divide by 4 = remove last 2 bits
   assign mret_taken = is_mret;
   assign mepc_out = mepc;
@@ -167,11 +171,11 @@ module csr
         mstatus[MstatusMpie] <= 1'b1;
       end
 
-      if (csr_access) begin
+      if (csr_write_en) begin
         case (csr_addr)
           MstatusAddr:  mstatus <= csr_wdata;
           MieAddr:      mie <= csr_wdata;
-          MtvecAddr:    mtvec <= {csr_wdata[XLEN-1:2], 2'b00};  // direct only
+          MtvecAddr:    mtvec <= csr_wdata;
           MscratchAddr: mscratch <= csr_wdata;
           MepcAddr:     mepc <= csr_wdata;
           McauseAddr:   mcause <= csr_wdata;

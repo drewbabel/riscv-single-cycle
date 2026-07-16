@@ -167,7 +167,8 @@ module csr_tb;
     @(posedge clk);
     #1;
     csr_access = 0;
-    check("mtvec_direct", csr_rdata, 32'hFFFF_FFFC);
+    check("mtvec_wlrl", csr_rdata, 32'hFFFF_FFFF);
+    check("mtvec_vector_aligned", trap_vector, 32'hFFFF_FFFC);
 
     verdict();
   end

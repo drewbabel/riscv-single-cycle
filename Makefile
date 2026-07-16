@@ -29,6 +29,14 @@ run:
 	iverilog -g2012 -s $(MOD)_tb -o $(SIM) $(RTL) $(TB)
 	vvp $(SIM)
 
+prog:
+	@test -n "$(PROG)" || { echo "usage: make prog PROG=<name>  (tests/<name>.s, PASS = x28==1)"; exit 1; }
+	@mkdir -p build
+	$(RVGCC) $(RVFLAGS) -o build/$(PROG).elf tests/$(PROG).s
+	$(RVCOPY) -O verilog --verilog-data-width=4 build/$(PROG).elf tests/$(PROG).hex
+	iverilog -g2012 -s prog_tb -o $(SIM) $(RTL) tb/prog_tb.sv
+	vvp $(SIM) +HEX=tests/$(PROG).hex
+
 wave:
 	@test -n "$(MOD)" || { echo "usage: make wave MOD=<module>"; exit 1; }
 	@mkdir -p build
@@ -73,4 +81,4 @@ clean:
 	rm -rf build *.vcd sim_build results.xml
 
 .DEFAULT_GOAL := run
-.PHONY: run wave formal view view-formal hex dis cosim clean
+.PHONY: run prog wave formal view view-formal hex dis cosim clean
