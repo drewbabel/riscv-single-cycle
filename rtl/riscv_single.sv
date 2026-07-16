@@ -93,6 +93,7 @@ module riscv_single
       (opcode == 7'b1100111) ||
       (opcode == 7'b0110111) ||
       (opcode == 7'b0010111) ||
+      (opcode == 7'b0001111) ||
       (opcode == OpcodeSystem)
     );
   assign exc_instr_misaligned =
