@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/drewbabel/riscv-single-cycle/actions/workflows/ci.yml/badge.svg)](https://github.com/drewbabel/riscv-single-cycle/actions/workflows/ci.yml)
 
-A configurable single-cycle RV32I processor with machine-mode traps, written in SystemVerilog.
+A single-cycle RV32I processor with machine-mode traps that boots FreeRTOS on a Basys 3, written in SystemVerilog.
 
 The core executes the RV32I base integer instruction set at one instruction per clock, extended with the Zicsr control registers, machine-mode traps, and a core-local timer. The program counter addresses instruction memory, the `control_unit` decodes the fetched word combinationally, the register file supplies operands, the `alu` computes, and the ALU result, a loaded word, a CSR value, or the return address writes back within the cycle. The only sequential state is the `pc` register, the register file, data memory, the CSR file, and the timer.
 
@@ -10,7 +10,9 @@ Data memory is organized as 32-bit words and supports byte, halfword, and word a
 
 The `csr` block holds the machine-mode registers and the trap unit. On an exception or an enabled timer interrupt, the trap unit records the faulting program counter in `mepc` and the reason in `mcause`, then redirects the next-PC multiplexer to the `mtvec` handler ahead of any branch or sequential fetch. An `mret` restores the interrupt-enable stack and returns to `mepc`. The `clint` block raises the timer interrupt once its memory-mapped `mtime` reaches `mtimecmp`.
 
-The design, testbenches, formal proofs, and co-simulation harness were written from scratch. A riscv-formal proof under SymbiYosys checks the assembled core against the RISC-V specification, including the machine-mode traps and the Zicsr path, and Spike lockstep co-simulation confirms every retired instruction matches a reference simulator.
+On the Basys 3 the core becomes a small system-on-chip. A serial bootloader streams a program over UART into the instruction and data memories, then releases the core to run the loaded image without re-synthesis, and memory-mapped registers drive the board LEDs and read the switches. On this system the core boots the FreeRTOS kernel, running two preemptive tasks scheduled from the `clint` timer tick and context-switched through the trap path and `mret`.
+
+The design, testbenches, formal proofs, co-simulation harness, and FreeRTOS port glue were written from scratch. The demo reuses the upstream FreeRTOS-Kernel RISC-V port. A riscv-formal proof under SymbiYosys checks the assembled core against the RISC-V specification, Spike lockstep co-simulation confirms every retired instruction matches a reference simulator, and the FreeRTOS demo validates the full system on real hardware.
 
 ![Single-cycle datapath block diagram](docs/datapath_block.svg)
 
@@ -19,7 +21,7 @@ The design, testbenches, formal proofs, and co-simulation harness were written f
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `XLEN` | `32` | Data and register width |
-| `DEPTH` | `64` | Instruction and data memory depth in words |
+| `DEPTH` | `64` | Memory depth in words, raised to `16384` for the Basys 3 system |
 
 ## Interface
 
@@ -64,6 +66,18 @@ The core traps illegal instructions, `ecall`, `ebreak`, and misaligned instructi
 | `mscratch` | Handler scratch word |
 | `mcycle` + `minstret` | 64-bit cycle and retired-instruction counters |
 
+## System-on-chip
+
+`board_top` wraps `riscv_single` for the Digilent Basys 3. Instruction fetch and data access run on separate block RAMs. The core steps once every 32 memory clocks through a clock-enable, so the fast memory serves a fetch and a dependent load within one core cycle. A serial bootloader receives a word count and the program body over UART, writes the words into memory while holding the core in reset, then releases the core at address zero.
+
+![board_top system block diagram](docs/board_top_block.svg)
+
+| Region | Address | Access |
+|--------|---------|--------|
+| LEDs | `0x0300_0000` | read + write |
+| Switches | `0x0300_0004` | read |
+| CLINT `mtime` and `mtimecmp` | `0x0200_xxxx` | read + write |
+
 ## Verification
 
 The riscv-formal proof wraps `riscv_single` in the RISC-V Formal Interface and checks every retired instruction against the RISC-V specification under SymbiYosys, including the machine-mode traps, the Zicsr read and write path, and the misaligned instruction, load, and store cases. Run the proof with `bash formal/rvfi/run.sh`.
@@ -71,6 +85,8 @@ The riscv-formal proof wraps `riscv_single` in the RISC-V Formal Interface and c
 Spike lockstep co-simulation runs the core against the Spike reference simulator and compares the register and memory write of every retired instruction, across hand-written programs and a randomized generator that exercises byte, halfword, and word accesses.
 
 The `alu` carries an exhaustive SymbiYosys proof that its `result`, `zero`, `lt`, and `ltu` match an independent reference model over the full input space, and every module has a self-checking testbench, with the `csr`, `clint`, and timer paths driven through directed trap sequences.
+
+The full system runs on a Basys 3, where the FreeRTOS demo drives the trap, timer, and byte-lane memory paths on real hardware. `tb/freertos_boot_tb.sv` reproduces the boot in simulation, and `tb/memcheck_boot_tb.sv` runs a 2000-word store and read-back stress test.
 
 ## Results
 
@@ -87,13 +103,14 @@ A timer interrupt fires once `mtime` reaches `mtimecmp`, redirecting the core to
 Every module builds from the top-level Makefile.
 
 ```
-make MOD=alu                   # run a module's testbench
-make wave MOD=alu              # run the testbench and open the waveform in Surfer
-make formal MOD=alu            # run the module's SymbiYosys proof
-bash formal/rvfi/run.sh        # run the full riscv-formal proof of the core
-make hex PROG=program          # assemble tests/program.s to a hex image
-make cosim PROG=cosim1         # lockstep-compare a program against Spike
-./synth_stats.sh riscv_single  # report a module's synthesis cost
+make MOD=alu                                # run a module's testbench
+make wave MOD=alu                           # run the testbench and open the waveform in Surfer
+make formal MOD=alu                         # run the module's SymbiYosys proof
+bash formal/rvfi/run.sh                     # run the full riscv-formal proof of the core
+make hex PROG=program                       # assemble tests/program.s to a hex image
+make cosim PROG=cosim1                      # lockstep-compare a program against Spike
+python3 tests/send_prog.py PORT prog.hex    # stream a program to the board over UART
+./synth_stats.sh riscv_single               # report a module's synthesis cost
 ```
 
 ## Synthesis
@@ -107,11 +124,13 @@ Synthesized for the Digilent Basys 3 (Xilinx Artix-7). sv2v first converts the S
 | `control_unit` | 24 | 0 | 0 |
 | `control_decoder` | 30 | 0 | 0 |
 | `extend` | 31 | 0 | 0 |
-| `clint` | 218 | 128 | 22 |
+| `clint` | 219 | 128 | 22 |
 | `alu` | 497 | 0 | 22 |
-| `csr` | 752 | 384 | 32 |
+| `csr` | 750 | 384 | 32 |
 | `regfile` | 911 | 992 | 0 |
-| `riscv_single` | 2669 | 1418 | 70 |
+| `riscv_single` | 2502 | 1422 | 70 |
+
+The `board_top` system adds the instruction and data memories as 32 block RAMs, 42% of the Artix-7 device.
 
 ### Tool versions
 
