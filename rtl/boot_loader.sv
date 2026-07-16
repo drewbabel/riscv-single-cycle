@@ -3,6 +3,7 @@ module boot_loader #(
     parameter int DEPTH = 64
 ) (
     input  logic            clk,
+    input  logic            core_en,
     input  logic            rst_n,
     input  logic            rx_valid,
     input  logic [     7:0] rx_data,
@@ -20,8 +21,8 @@ module boot_loader #(
 
   state_t state, next_state;
   logic [1:0] cnt_byte;
-  logic [$clog2(DEPTH)+1:0] cnt_word;
-  logic [$clog2(DEPTH)+1:0] max_word;
+  logic [XLEN-1:0] cnt_word;
+  logic [XLEN-1:0] max_word;
   logic [XLEN-1:0] acc;
 
   always_ff @(posedge clk) begin
@@ -29,18 +30,15 @@ module boot_loader #(
       state <= COUNT;
       cnt_byte <= '0;
       cnt_word <= '0;
-    end else begin
+    end else if (core_en) begin
       state <= next_state;
 
       if (rx_valid) begin
+        cnt_byte <= cnt_byte + 2'd1;
+        acc <= {rx_data, acc[XLEN-1:$bits(rx_data)]};
         case (state)
-          COUNT: max_word <= rx_data;
-          LOAD: begin
-            if (cnt_byte == 2'd3) cnt_word <= cnt_word + 1'd1;
-            cnt_byte <= cnt_byte + 2'd1;
-            acc <= {rx_data, acc[XLEN-1:$bits(rx_data)]};
-          end
-          DONE: ;
+          COUNT: if (cnt_byte == 2'd3) max_word <= {rx_data, acc[XLEN-1:$bits(rx_data)]};
+          LOAD: if (cnt_byte == 2'd3) cnt_word <= cnt_word + 1'd1;
           default: ;
         endcase
       end
@@ -50,15 +48,15 @@ module boot_loader #(
   always_comb begin
     next_state = state;
     case (state)
-      COUNT: if (rx_valid) next_state = LOAD;
+      COUNT: if (rx_valid && cnt_byte == 2'd3) next_state = LOAD;
       LOAD: if (cnt_word == max_word) next_state = DONE;
-      DONE: ; // Terminates
+      DONE: ;  // Terminates
       default: ;
     endcase
   end
 
-  assign we      = (rx_valid && (cnt_byte == 2'd3));
-  assign waddr   = XLEN'(cnt_word) << 2;
+  assign we      = (state == LOAD) && rx_valid && (cnt_byte == 2'd3);
+  assign waddr   = cnt_word << 2;
   assign wdata   = {rx_data, acc[XLEN-1:$bits(rx_data)]};
   assign loading = state != DONE;
 
