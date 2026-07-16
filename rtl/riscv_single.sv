@@ -151,7 +151,7 @@ module riscv_single
       .rs1_data            (rs1_data),
       .zimm                (instr[19:15]),
       .pc                  (pc),
-      .bad_addr            (alu_result),
+      .bad_addr            (exc_instr_misaligned ? pc_target : alu_result),
       .exc_illegal         (exc_illegal),
       .exc_ecall           (is_ecall),
       .exc_ebreak          (is_ebreak),
