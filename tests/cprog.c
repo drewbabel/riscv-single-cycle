@@ -1,7 +1,3 @@
-/* Compiled-C co-sim test: pure rv32i, freestanding, no stack or .data.
-   Computes into registers and stores results to memory so the co-sim
-   diffs the stores against Spike. Entry is _start (-nostartfiles). */
-
 #define M ((volatile int *)0x80008000)
 
 void _start(void) {

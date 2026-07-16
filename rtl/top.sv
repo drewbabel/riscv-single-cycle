@@ -14,7 +14,7 @@ module top #(
   logic [XLEN-1:0] read_data;
   logic [XLEN-1:0] dmem_rdata;
   logic [XLEN-1:0] clint_rdata;
-  logic      [3:0] store_wstrb;
+  logic [     3:0] store_wstrb;
   logic [XLEN-1:0] store_data;
   logic            timer_irq;
   logic            clint_sel;
@@ -26,6 +26,7 @@ module top #(
       .XLEN(XLEN)
   ) riscv_single_inst (
       .clk        (clk),
+      .core_en    (1'b1),
       .rst_n      (rst_n),
       .instr      (instr),
       .read_data  (read_data),
@@ -50,9 +51,9 @@ module top #(
       .XLEN (XLEN),
       .DEPTH(DEPTH)
   ) dmem_inst (
-      .clk(clk),
+      .clk  (clk),
       .wstrb(clint_sel ? 4'b0 : store_wstrb),
-      .addr(alu_result),
+      .addr (alu_result),
       .wdata(store_data),
       .rdata(dmem_rdata)
   );
@@ -61,6 +62,7 @@ module top #(
       .XLEN(XLEN)
   ) clint_inst (
       .clk(clk),
+      .core_en(1'b1),
       .rst_n(rst_n),
       .sel(clint_sel),
       .wstrb(store_wstrb),

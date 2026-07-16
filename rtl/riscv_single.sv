@@ -1,10 +1,12 @@
 module riscv_single
   import alu_pkg::*;
   import csr_pkg::*;
+  import opcode_pkg::*;
 #(
     parameter int XLEN = 32
 ) (
     input  logic            clk,
+    input  logic            core_en,
     input  logic            rst_n,
     input  logic [XLEN-1:0] instr,
     input  logic [XLEN-1:0] read_data,
@@ -83,26 +85,27 @@ module riscv_single
    (funct12 == Funct12Ebreak);
   assign is_mret = (opcode == OpcodeSystem) && (funct3 == Funct3Priv) && (funct12 == Funct12Mret);
   assign exc_illegal = !(
-      (opcode == 7'b0110011) ||
-      (opcode == 7'b0010011) ||
-      (opcode == 7'b0000011) ||
-      (opcode == 7'b0100011) ||
-      (opcode == 7'b1100011) ||
-      (opcode == 7'b1101111) ||
-      (opcode == 7'b1100111) ||
-      (opcode == 7'b0110111) ||
-      (opcode == 7'b0010111) ||
+      (opcode == OpcodeOp) ||
+      (opcode == OpcodeOpImm) ||
+      (opcode == OpcodeLoad) ||
+      (opcode == OpcodeStore) ||
+      (opcode == OpcodeBranch) ||
+      (opcode == OpcodeJal) ||
+      (opcode == OpcodeJalr) ||
+      (opcode == OpcodeLui) ||
+      (opcode == OpcodeAuipc) ||
+      (opcode == OpcodeMiscMem) ||
       (opcode == OpcodeSystem)
     );
   assign exc_instr_misaligned =
-      (opcode == 7'b1100011 || opcode == 7'b1101111 || opcode == 7'b1100111) &&
+      (opcode == OpcodeBranch || opcode == OpcodeJal || opcode == OpcodeJalr) &&
       ((pc_src ? pc_target[1:0] : pc[1:0]) != 2'b00);
-  assign exc_load_misaligned = (opcode == 7'b0000011) && (
+  assign exc_load_misaligned = (opcode == OpcodeLoad) && (
       (funct3 == 3'b001 || funct3 == 3'b101) ? alu_result[0] :
       (funct3 == 3'b010) ? |alu_result[1:0] :
       1'b0
     );
-  assign exc_store_misaligned = (opcode == 7'b0100011) && (
+  assign exc_store_misaligned = (opcode == OpcodeStore) && (
       (funct3 == 3'b001) ? alu_result[0] :
       (funct3 == 3'b010) ? |alu_result[1:0] :
       1'b0
@@ -140,6 +143,7 @@ module riscv_single
       .XLEN(XLEN)
   ) csr_inst (
       .clk                 (clk),
+      .core_en             (core_en),
       .rst_n               (rst_n),
       .csr_access          (csr_access),
       .csr_addr            (funct12),
@@ -147,7 +151,7 @@ module riscv_single
       .rs1_data            (rs1_data),
       .zimm                (instr[19:15]),
       .pc                  (pc),
-      .bad_addr            (alu_result),
+      .bad_addr            (exc_instr_misaligned ? pc_target : alu_result),
       .exc_illegal         (exc_illegal),
       .exc_ecall           (is_ecall),
       .exc_ebreak          (is_ebreak),
@@ -185,6 +189,7 @@ module riscv_single
       .XLEN(XLEN)
   ) datapath_inst (
       .clk          (clk),
+      .core_en      (core_en),
       .rst_n        (rst_n),
       .reg_write    (reg_write_gated),
       .imm_src      (imm_src),

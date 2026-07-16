@@ -4,6 +4,7 @@ module datapath
     parameter int XLEN = 32
 ) (
     input  logic                        clk,
+    input  logic                        core_en,
     input  logic                        rst_n,
     input  logic                        reg_write,
     input  logic             [     2:0] imm_src,
@@ -49,6 +50,7 @@ module datapath
       .RESET_ADDR('h0000_0000)
   ) pc_inst (
       .clk(clk),
+      .core_en(core_en),
       .rst_n(rst_n),
       .pc_next(pc_next),
       .pc_q(pc)
@@ -58,6 +60,7 @@ module datapath
       .XLEN(XLEN)
   ) regfile_inst (
       .clk(clk),
+      .core_en(core_en),
       .rst_n(rst_n),
       .we(reg_write),
       .waddr(instr[11:7]),

@@ -3,6 +3,7 @@ module regfile #(
     parameter int XLEN   = 32
 ) (
     input logic clk,
+    input logic core_en,
     input logic rst_n,
     input logic we,
     input logic [AWIDTH-1:0] waddr,
@@ -25,8 +26,7 @@ module regfile #(
       for (int i = 0; i < Depth; i++) begin
         regfile_mem[i] <= '0;
       end
-    end
-    else begin
+    end else if (core_en) begin
       if (we && waddr != 0) begin
         regfile_mem[waddr] <= wdata;
       end

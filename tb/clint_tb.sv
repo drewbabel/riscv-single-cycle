@@ -8,14 +8,17 @@ module clint_tb;
   logic            clk = 0;
   logic            rst_n;
   logic            sel;
-  logic      [3:0] wstrb;
+  logic [     3:0] wstrb;
   logic [Xlen-1:0] addr;
   logic [Xlen-1:0] wdata;
   logic [Xlen-1:0] rdata;
   logic            timer_irq;
 
-  clint #(.XLEN(Xlen)) dut (
+  clint #(
+      .XLEN(Xlen)
+  ) dut (
       .clk      (clk),
+      .core_en  (1'b1),
       .rst_n    (rst_n),
       .sel      (sel),
       .wstrb    (wstrb),
@@ -50,8 +53,7 @@ module clint_tb;
     wstrb = 0;
   endtask
 
-  task automatic check(input string name, input logic [Xlen-1:0] got,
-                       input logic [Xlen-1:0] exp);
+  task automatic check(input string name, input logic [Xlen-1:0] got, input logic [Xlen-1:0] exp);
     checks++;
     if (got !== exp) begin
       errors++;
@@ -83,6 +85,22 @@ module clint_tb;
     repeat (60) @(posedge clk);
     #1;
     check("irq_after_compare", timer_irq, 32'd1);
+
+    #1;
+    sel   = 1;
+    wstrb = 4'b0010;  // lane 1 only
+    addr  = 32'h0000_4000;
+    wdata = 32'h0000_AA00;
+    @(posedge clk);
+    #1;
+    sel   = 0;
+    wstrb = 0;
+    #1;
+    sel  = 1;
+    addr = 32'h0000_4000;
+    #1;
+    check("mtimecmp_byte_write", rdata, 32'h0000_AA32);
+    sel = 0;
 
     if (errors == 0) $display("PASS: %0d checks, %0d mismatches", checks, errors);
     else $fatal(1, "FAIL: %0d mismatches, %0d checks", errors, checks);

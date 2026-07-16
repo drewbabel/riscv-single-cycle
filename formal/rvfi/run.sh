@@ -18,7 +18,7 @@ cp "$HERE/wrapper.sv" "$DST/wrapper.sv"
 cp "$HERE/checks.cfg" "$DST/checks.cfg"
 
 RTL=(
-  alu_pkg csr_pkg alu extend pc regfile imem dmem
+  alu_pkg csr_pkg opcode_pkg alu extend pc regfile imem dmem
   alu_decoder control_decoder control_unit csr datapath riscv_single
 )
 SRC=()

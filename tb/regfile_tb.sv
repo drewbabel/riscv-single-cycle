@@ -26,6 +26,7 @@ module regfile_tb ();
       .XLEN  (XLEN)
   ) dut (
       .clk(clk),
+      .core_en(1'b1),
       .rst_n(rst_n),
       .we(we),
       .waddr(waddr),

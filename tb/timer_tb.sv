@@ -26,8 +26,7 @@ module timer_tb;
 
   always #5 clk = ~clk;
 
-  task automatic check(input string name, input logic [Xlen-1:0] got,
-                       input logic [Xlen-1:0] exp);
+  task automatic check(input string name, input logic [Xlen-1:0] got, input logic [Xlen-1:0] exp);
     checks++;
     if (got !== exp) begin
       errors++;

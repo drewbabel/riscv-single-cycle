@@ -4,6 +4,7 @@ module csr
     parameter int XLEN = 32
 ) (
     input logic clk,
+    input logic core_en,
     input logic rst_n,
 
     // Zicsr access
@@ -87,6 +88,13 @@ module csr
   assign mret_taken = is_mret;
   assign mepc_out = mepc;
 
+  // Mtip mirrors line
+  logic [XLEN-1:0] mip_read;
+  always_comb begin
+    mip_read = mip;
+    mip_read[Mtip] = timer_irq;
+  end
+
   // Read mux
   always_comb begin
     case (csr_addr)
@@ -97,7 +105,7 @@ module csr
       MepcAddr:     csr_rdata = mepc;
       McauseAddr:   csr_rdata = mcause;
       MtvalAddr:    csr_rdata = mtval;
-      MipAddr:      csr_rdata = mip;
+      MipAddr:      csr_rdata = mip_read;
       McycleAddr:   csr_rdata = mcycle;
       MinstretAddr: csr_rdata = minstret;
       McyclehAddr:   csr_rdata = mcycleh;
@@ -120,11 +128,13 @@ module csr
       minstret <= '0;
       mcycleh   <= '0;
       minstreth <= '0;
-    end else begin
-      mcycle    <= mcycle + 1;
-      mcycleh   <= (mcycle == '1) ? mcycleh + 1 : mcycleh;
-      minstret  <= minstret + 1;
-      minstreth <= (minstret == '1) ? minstreth + 1 : minstreth;
+    end else if (core_en) begin
+      mcycle  <= mcycle + 1;
+      mcycleh <= (mcycle == '1) ? mcycleh + 1 : mcycleh;
+      if (!trap_taken) begin  // retired only
+        minstret  <= minstret + 1;
+        minstreth <= (minstret == '1) ? minstreth + 1 : minstreth;
+      end
 
       if (trap_taken) begin
         mstatus[MstatusMpie] <= mstatus[MstatusMie];
@@ -152,18 +162,21 @@ module csr
           mcause <= {1'b1, 31'(CauseMachineTimerIrq)};
           mtval  <= '0;
         end
+      end else if (is_mret) begin
+        mstatus[MstatusMie]  <= mstatus[MstatusMpie];
+        mstatus[MstatusMpie] <= 1'b1;
       end
 
       if (csr_access) begin
         case (csr_addr)
           MstatusAddr:  mstatus <= csr_wdata;
           MieAddr:      mie <= csr_wdata;
-          MtvecAddr:    mtvec <= csr_wdata;
+          MtvecAddr:    mtvec <= {csr_wdata[XLEN-1:2], 2'b00};  // direct only
           MscratchAddr: mscratch <= csr_wdata;
           MepcAddr:     mepc <= csr_wdata;
           McauseAddr:   mcause <= csr_wdata;
           MtvalAddr:    mtval <= csr_wdata;
-          MipAddr:      mip <= csr_wdata;
+          MipAddr:      mip <= csr_wdata & ~(XLEN'(1) << Mtip);  // Mtip read-only
           McycleAddr:   mcycle <= csr_wdata;
           MinstretAddr: minstret <= csr_wdata;
           McyclehAddr:   mcycleh <= csr_wdata;

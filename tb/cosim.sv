@@ -6,18 +6,18 @@ module cosim ();
   int checks = 0;
   int errors = 0;
 
-  localparam int Xlen  = 32;
+  localparam int Xlen = 32;
   localparam int Depth = 64;
 
-  logic            clk = 1'b0;
-  logic            rst_n;
-  logic [Xlen-1:0] pc;
-  logic [Xlen-1:0] alu_result;
-  logic [Xlen-1:0] write_data;
-  logic            mem_write;
+  logic             clk = 1'b0;
+  logic             rst_n;
+  logic  [Xlen-1:0] pc;
+  logic  [Xlen-1:0] alu_result;
+  logic  [Xlen-1:0] write_data;
+  logic             mem_write;
 
-  string hexfile;
-  int    max_commits;
+  string            hexfile;
+  int               max_commits;
 
   always #5 clk = ~clk;
 
@@ -49,8 +49,8 @@ module cosim ();
     rw    = dut.riscv_single_inst.reg_write;
     // pc rd rd_val mem_write mem_addr wstrb store_data
     $display("COMMIT %08x %0d %08x %0d %08x %1x %08x", pc, (rw && rd != 0) ? rd : 0,
-             dut.riscv_single_inst.datapath_inst.result, mem_write, alu_result,
-             dut.store_wstrb, dut.store_data);
+             dut.riscv_single_inst.datapath_inst.result, mem_write, alu_result, dut.store_wstrb,
+             dut.store_data);
     checks++;
   endtask  // Automatic
 

@@ -17,6 +17,7 @@ module pc_tb ();
       .RESET_ADDR(ResetAddr)
   ) dut (
       .clk(clk),
+      .core_en(1'b1),
       .rst_n(rst_n),
       .pc_next(pc_next),
       .pc_q(pc_q)

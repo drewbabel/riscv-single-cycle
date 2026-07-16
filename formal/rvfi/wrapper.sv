@@ -65,6 +65,7 @@ module rvfi_wrapper (
 
   riscv_single uut (
       .clk          (clock),
+      .core_en      (1'b1),
       .rst_n        (!reset),
       .instr        (instr),
       .read_data    (read_data),

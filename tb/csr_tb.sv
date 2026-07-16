@@ -38,6 +38,7 @@ module csr_tb;
       .XLEN(Xlen)
   ) dut (
       .clk                 (clk),
+      .core_en             (1'b1),
       .rst_n               (rst_n),
       .csr_access          (csr_access),
       .csr_addr            (csr_addr),
@@ -143,6 +144,30 @@ module csr_tb;
     csr_addr = MtvecAddr;
     #1;
     check("mtvec_untouched", csr_rdata, 32'h0);
+
+    // Mtip mirror check
+    csr_addr   = MipAddr;
+    funct3     = Funct3Csrrw;
+    rs1_data   = 32'hFFFF_FFFF;
+    csr_access = 1;
+    @(posedge clk);
+    #1;
+    csr_access = 0;
+    check("mip_mtip_masked", csr_rdata[Mtip], 1'b0);
+    timer_irq = 1;
+    #1;
+    check("mip_mtip_line", csr_rdata[Mtip], 1'b1);
+    timer_irq = 0;
+
+    // mtvec mode check
+    csr_addr   = MtvecAddr;
+    funct3     = Funct3Csrrw;
+    rs1_data   = 32'hFFFF_FFFF;
+    csr_access = 1;
+    @(posedge clk);
+    #1;
+    csr_access = 0;
+    check("mtvec_direct", csr_rdata, 32'hFFFF_FFFC);
 
     verdict();
   end

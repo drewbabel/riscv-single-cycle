@@ -5,12 +5,14 @@ module extend_tb;
 
   localparam int Xlen = 32;
 
-  logic [31:0]     instr;
-  logic [2:0]      imm_src;
+  logic [    31:0] instr;
+  logic [     2:0] imm_src;
   logic [Xlen-1:0] imm_ext;
   logic [Xlen-1:0] exp;
 
-  extend #(.XLEN(Xlen)) dut (
+  extend #(
+      .XLEN(Xlen)
+  ) dut (
       .instr  (instr),
       .imm_src(imm_src),
       .imm_ext(imm_ext)

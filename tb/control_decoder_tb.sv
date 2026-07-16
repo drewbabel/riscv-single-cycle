@@ -44,17 +44,17 @@ module control_decoder_tb ();
   localparam logic [1:0] AluFunct = 2'b10;
 
   control_decoder dut (
-      .op        (op),
-      .reg_write (reg_write),
-      .imm_src   (imm_src),
-      .alu_a_src (alu_a_src),
+      .op           (op),
+      .reg_write    (reg_write),
+      .imm_src      (imm_src),
+      .alu_a_src    (alu_a_src),
       .pc_target_src(pc_target_src),
-      .alu_src   (alu_src),
-      .mem_write (mem_write),
-      .result_src(result_src),
-      .branch    (branch),
-      .jump      (jump),
-      .alu_op    (alu_op)
+      .alu_src      (alu_src),
+      .mem_write    (mem_write),
+      .result_src   (result_src),
+      .branch       (branch),
+      .jump         (jump),
+      .alu_op       (alu_op)
   );
 
   task automatic check1(input string name, input logic got, input logic exp);

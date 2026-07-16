@@ -1,5 +1,6 @@
 module control_decoder
   import csr_pkg::*;
+  import opcode_pkg::*;
 (
     input  logic [ 6:0] op,
     input  logic [ 2:0] funct3,
@@ -19,17 +20,6 @@ module control_decoder
     output logic        is_ebreak,
     output logic        is_mret
 );
-
-  // opcodes
-  localparam logic [6:0] OpcodeOp = 7'b0110011;
-  localparam logic [6:0] OpcodeOpImm = 7'b0010011;
-  localparam logic [6:0] OpcodeLoad = 7'b0000011;
-  localparam logic [6:0] OpcodeStore = 7'b0100011;
-  localparam logic [6:0] OpcodeBranch = 7'b1100011;
-  localparam logic [6:0] OpcodeJal = 7'b1101111;
-  localparam logic [6:0] OpcodeJalr = 7'b1100111;
-  localparam logic [6:0] OpcodeLui = 7'b0110111;
-  localparam logic [6:0] OpcodeAuipc = 7'b0010111;
 
   // imm_src encoding: 0=I, 1=S, 2=B, 3=U, 4=J
   localparam logic [2:0] ImmI = 3'd0;

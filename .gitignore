@@ -20,3 +20,12 @@ results.xml
 *.fasm
 *.json
 *.log
+FreeRTOS-Kernel/
+
+# Verilator
+obj_dir/
+
+# FreeRTOS build outputs (source kept, images rebuilt)
+sw/freertos/*.elf
+sw/freertos/*.bin
+sw/freertos/*.hex
