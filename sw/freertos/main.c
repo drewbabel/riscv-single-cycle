@@ -1,36 +1,39 @@
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 #define LED (*(volatile unsigned int *) 0x03000000)
+#define SW  (*(volatile unsigned int *) 0x03000004)
 
-#ifndef SLOW_DELAY
-#define SLOW_DELAY pdMS_TO_TICKS(250)
-#endif
-#ifndef FAST_DELAY
-#define FAST_DELAY pdMS_TO_TICKS(60)
+#ifndef READ_DELAY
+#define READ_DELAY pdMS_TO_TICKS(20)
 #endif
 
-static void blink_slow(void *pv) {
+static QueueHandle_t sw_queue;
+
+static void switch_reader(void *pv) {
   (void) pv;
   for (;;) {
-    LED ^= 0x0001;
-    vTaskDelay(SLOW_DELAY);
+    unsigned int pattern = SW & 0xFFFF;
+    xQueueSend(sw_queue, &pattern, portMAX_DELAY);
+    vTaskDelay(READ_DELAY);
   }
 }
 
-static void blink_fast(void *pv) {
+static void led_writer(void *pv) {
   (void) pv;
+  unsigned int pattern;
   for (;;) {
-    LED ^= 0x8000;
-    vTaskDelay(FAST_DELAY);
+    if (xQueueReceive(sw_queue, &pattern, portMAX_DELAY) == pdTRUE) LED = pattern;
   }
 }
 
 int main(void) {
   LED = 0x0200;  // entered main
-  xTaskCreate(blink_slow, "slow", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-  xTaskCreate(blink_fast, "fast", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-  LED = 0x0300;  // tasks created
+  sw_queue = xQueueCreate(4, sizeof(unsigned int));
+  LED = 0x0300;  // queue created
+  xTaskCreate(switch_reader, "rd", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+  xTaskCreate(led_writer, "wr", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
   vTaskStartScheduler();
   for (;;) {
   }

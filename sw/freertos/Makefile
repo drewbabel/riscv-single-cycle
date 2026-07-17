@@ -24,9 +24,9 @@ all: freertos.hex freertos_sim.hex
 freertos.elf: $(CSRC) $(ASRC) link.ld FreeRTOSConfig.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(CSRC) $(ASRC) $(LIBGCC)
 
-# Sim build: short delays so tasks toggle within a few ticks
+# Sim build: fast polling so the queue moves within a few ticks
 freertos_sim.elf: $(CSRC) $(ASRC) link.ld FreeRTOSConfig.h
-	$(CC) $(CFLAGS) -DSLOW_DELAY=3 -DFAST_DELAY=1 $(LDFLAGS) -o $@ $(CSRC) $(ASRC) $(LIBGCC)
+	$(CC) $(CFLAGS) -DREAD_DELAY=2 $(LDFLAGS) -o $@ $(CSRC) $(ASRC) $(LIBGCC)
 
 %.hex: %.elf
 	$(OBJCOPY) -O verilog --verilog-data-width=4 $< $@
