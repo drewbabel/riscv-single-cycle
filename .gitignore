@@ -29,3 +29,8 @@ obj_dir/
 sw/freertos/*.elf
 sw/freertos/*.bin
 sw/freertos/*.hex
+
+# CoreMark (EEMBC source cloned at build, images rebuilt)
+sw/coremark-src/
+sw/coremark/*.elf
+sw/coremark/*.hex
