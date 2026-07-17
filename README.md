@@ -77,6 +77,16 @@ The core traps illegal instructions, `ecall`, `ebreak`, and misaligned instructi
 | LEDs | `0x0300_0000` | read + write |
 | Switches | `0x0300_0004` | read |
 | CLINT `mtime` and `mtimecmp` | `0x0200_xxxx` | read + write |
+| UART transmit data | `0x0400_0000` | write |
+| UART transmit ready | `0x0400_0004` | read |
+
+A store to the transmit register sends one byte, and polling the ready register before each store lets a program print over the serial line. The transmitter is the formally proven `uart_tx` from the standalone UART project, reused here behind the register interface.
+
+## CoreMark
+
+CoreMark runs on the core as a bare-metal program, timed by the `mcycle` counter and printing its report over the serial transmitter. The port links against the soft-multiply routines in libgcc, since the base integer core carries no hardware multiply.
+
+The core retires one iteration in `718010` cycles, a score of 1.39 CoreMark per MHz measured in simulation. The single-cycle datapath spends the same cycles on every iteration, so the CoreMark per MHz carries to the board, where the raw score scales with the core clock.
 
 ## Verification
 
@@ -110,6 +120,8 @@ bash formal/rvfi/run.sh                     # run the full riscv-formal proof of
 make hex PROG=program                       # assemble tests/program.s to a hex image
 make cosim PROG=cosim1                      # lockstep-compare a program against Spike
 python3 tests/send_prog.py PORT prog.hex    # stream a program to the board over UART
+python3 tests/monitor.py PORT               # print the board's serial output
+make -C sw/coremark all                     # build the CoreMark image
 ./synth_stats.sh riscv_single               # report a module's synthesis cost
 ```
 
@@ -126,9 +138,9 @@ Synthesized for the Digilent Basys 3 (Xilinx Artix-7). sv2v first converts the S
 | `extend` | 31 | 0 | 0 |
 | `clint` | 219 | 128 | 22 |
 | `alu` | 497 | 0 | 22 |
-| `csr` | 750 | 384 | 32 |
+| `csr` | 845 | 383 | 32 |
 | `regfile` | 911 | 992 | 0 |
-| `riscv_single` | 2502 | 1422 | 70 |
+| `riscv_single` | 2805 | 1416 | 70 |
 
 The `board_top` system adds the instruction and data memories as 32 block RAMs, 42% of the Artix-7 device.
 

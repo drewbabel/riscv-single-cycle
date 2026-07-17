@@ -12,6 +12,7 @@ module board_top #(
 
   localparam logic [7:0] ClintTag = 8'h02;
   localparam logic [7:0] GpioTag = 8'h03;
+  localparam logic [7:0] UartTag = 8'h04;
 
   logic            rst_n;
   logic [XLEN-1:0] instr;
@@ -28,8 +29,12 @@ module board_top #(
   logic [XLEN-1:0] mem_rdata;
   logic [XLEN-1:0] clint_rdata;
   logic [XLEN-1:0] gpio_rdata;
+  logic [XLEN-1:0] uart_rdata;
   logic            clint_sel;
   logic            gpio_sel;
+  logic            uart_sel;
+  logic            tx_ready;
+  logic            tx_valid;
   logic [    15:0] led_reg;
 
   logic            core_rst_n;
@@ -65,7 +70,19 @@ module board_top #(
   assign instr      = instr_raw;
   assign clint_sel  = alu_result[31:24] == ClintTag;
   assign gpio_sel   = alu_result[31:24] == GpioTag;
-  assign read_data  = gpio_sel ? gpio_rdata : clint_sel ? clint_rdata : mem_rdata;
+  assign uart_sel   = alu_result[31:24] == UartTag;
+
+  // Peripheral read mux
+  always_comb begin
+    if (uart_sel) read_data = uart_rdata;
+    else if (gpio_sel) read_data = gpio_rdata;
+    else if (clint_sel) read_data = clint_rdata;
+    else read_data = mem_rdata;
+  end
+
+  // Serial transmit register
+  assign uart_rdata = {31'b0, tx_ready};
+  assign tx_valid   = core_en && uart_sel && !alu_result[2] && |store_wstrb;
 
   // GPIO read mux
   assign gpio_rdata = alu_result[2] ? {16'b0, sw} : {16'b0, led_reg};
@@ -75,19 +92,21 @@ module board_top #(
     else if (core_en && gpio_sel && !alu_result[2] && |store_wstrb) led_reg <= store_data[15:0];
   end
 
-  assign uart_tx = 1'b1;  // Idle high
-
   // Registered store path
   always_ff @(posedge clk) begin
     rt_addr_q <= alu_result;
     rt_data_q <= store_data;
-    rt_strb_q <= (clint_sel || gpio_sel) ? 4'b0 : store_wstrb;
+    rt_strb_q <= (clint_sel || gpio_sel || uart_sel) ? 4'b0 : store_wstrb;
   end
 
   // Boot write mux
   assign mem_daddr = loading ? boot_waddr : rt_addr_q;
   assign mem_wdata = loading ? boot_wdata : rt_data_q;
-  assign mem_wstrb = loading ? (boot_we ? 4'hF : 4'b0) : rt_strb_q;
+  always_comb begin
+    if (!loading) mem_wstrb = rt_strb_q;
+    else if (boot_we) mem_wstrb = 4'hF;
+    else mem_wstrb = 4'b0;
+  end
 
   uart_rx #(
       .CLK_FREQ_HZ(3_125_000),
@@ -100,6 +119,19 @@ module board_top #(
       .rx_data  (rx_byte),
       .rx_valid (rx_valid_w),
       .rx_error ()
+  );
+
+  uart_tx #(
+      .CLK_FREQ_HZ(3_125_000),
+      .BAUD_RATE  (28_800)
+  ) uart_tx_inst (
+      .clk      (clk),
+      .core_en  (core_en),
+      .rst_n    (rst_n),
+      .tx_data  (store_data[7:0]),
+      .tx_valid (tx_valid),
+      .tx_ready (tx_ready),
+      .tx_serial(uart_tx)
   );
 
   boot_loader #(

@@ -19,6 +19,7 @@ jobs:
             mod=$(basename "$tb" _tb.sv)
             case "$mod" in
               freertos_boot) echo "== skip $mod (needs FreeRTOS image) =="; continue;;
+              coremark_boot) echo "== skip $mod (needs CoreMark image) =="; continue;;
               prog) echo "== skip $mod (driven by the selfcheck job) =="; continue;;
             esac
             echo "== $mod =="
@@ -173,9 +174,26 @@ jobs:
       - name: Run FreeRTOS queue demo testbench
         run: make MOD=freertos_boot
 
+  coremark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RISC-V toolchain
+        run: |
+          sudo grep -rlZ packages.microsoft.com /etc/apt/sources.list.d/ 2>/dev/null | sudo xargs -0 -r rm -f
+          sudo apt-get update
+          sudo apt-get install -y gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+      - name: Alias toolchain to riscv64-elf-*
+        run: |
+          for t in gcc objcopy; do
+            sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" /usr/local/bin/riscv64-elf-$t
+          done
+      - name: Build CoreMark image
+        run: make -C sw/coremark all
+
   ci-gate:
     if: always()
-    needs: [testbenches, selfcheck, formal, core-formal-list, core-formal, cosim, freertos]
+    needs: [testbenches, selfcheck, formal, core-formal-list, core-formal, cosim, freertos, coremark]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all CI jobs succeeded
