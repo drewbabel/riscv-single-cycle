@@ -94,7 +94,7 @@ On the Basys 3 the benchmark auto-calibrates to 60 iterations and runs for 13.78
 
 The riscv-formal proof wraps `riscv_single` in the RISC-V Formal Interface and checks every retired instruction against the RISC-V specification under SymbiYosys, including the machine-mode traps, the Zicsr read and write path, and the misaligned instruction, load, and store cases. Run the proof with `bash formal/rvfi/run.sh`.
 
-Spike lockstep co-simulation runs the core against the Spike reference simulator and compares the register and memory write of every retired instruction, across hand-written programs and a randomized generator that exercises byte, halfword, and word accesses.
+Spike lockstep co-simulation runs the core against the Spike reference simulator and compares the register and memory write of every retired instruction. Beyond hand-written programs, a randomized program generator feeds the same lockstep check with byte, halfword, and word accesses, a differential test against the golden model that reaches sequences the directed programs miss.
 
 The `alu` carries an exhaustive SymbiYosys proof that its `result`, `zero`, `lt`, and `ltu` match an independent reference model over the full input space, and every module has a self-checking testbench, with the `csr`, `clint`, and timer paths driven through directed trap sequences.
 
