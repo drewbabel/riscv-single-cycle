@@ -150,9 +150,32 @@ jobs:
       - name: Randomized co-sim regression (500 programs)
         run: python3 tests/cosim.py --rand 500
 
+  freertos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Icarus Verilog and RISC-V toolchain
+        run: |
+          sudo grep -rlZ packages.microsoft.com /etc/apt/sources.list.d/ 2>/dev/null | sudo xargs -0 -r rm -f
+          sudo apt-get update
+          sudo apt-get install -y iverilog gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+      - name: Alias toolchain to riscv64-elf-*
+        run: |
+          for t in gcc objcopy; do
+            sudo ln -sf "$(command -v riscv64-unknown-elf-$t)" /usr/local/bin/riscv64-elf-$t
+          done
+      - name: Clone FreeRTOS-Kernel
+        run: |
+          git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git sw/FreeRTOS-Kernel
+          git -C sw/FreeRTOS-Kernel checkout 9db704cd3bbe4963f9bd3de1f1161ea2cf90768b
+      - name: Build FreeRTOS demo image
+        run: make -C sw/freertos all
+      - name: Run FreeRTOS queue demo testbench
+        run: make MOD=freertos_boot
+
   ci-gate:
     if: always()
-    needs: [testbenches, selfcheck, formal, core-formal-list, core-formal, cosim]
+    needs: [testbenches, selfcheck, formal, core-formal-list, core-formal, cosim, freertos]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all CI jobs succeeded
