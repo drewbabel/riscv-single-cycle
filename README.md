@@ -120,7 +120,6 @@ Every module builds from the top-level Makefile.
 make MOD=alu                                # run a module's testbench
 make wave MOD=alu                           # run the testbench and open the waveform in Surfer
 make formal MOD=alu                         # run the module's SymbiYosys proof
-make formal MOD=irq                         # prove the interrupt-arrival and masking path
 bash formal/rvfi/run.sh                     # run the full riscv-formal proof of the core
 make hex PROG=program                       # assemble tests/program.s to a hex image
 make cosim PROG=cosim1                      # lockstep-compare a program against Spike
