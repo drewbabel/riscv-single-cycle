@@ -62,6 +62,8 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: alu formal
         run: make formal MOD=alu
+      - name: irq formal
+        run: make formal MOD=irq
 
   core-formal-list:
     runs-on: ubuntu-latest
