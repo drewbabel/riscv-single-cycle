@@ -94,6 +94,8 @@ On the Basys 3 the benchmark auto-calibrates to 60 iterations and runs for 13.78
 
 The riscv-formal proof wraps `riscv_single` in the RISC-V Formal Interface and checks every retired instruction against the RISC-V specification under SymbiYosys, including the machine-mode traps, the Zicsr read and write path, and the misaligned instruction, load, and store cases. Run the proof with `bash formal/rvfi/run.sh`.
 
+The riscv-formal wrapper ties the timer interrupt low, so a separate proof, `formal/irq.sby`, drives it free over the `csr` trap logic and proves the interrupt path by k-induction. It shows that an interrupt is taken only when it is pending with both `mstatus.MIE` and `mie.MTIE` set, that it is never taken while masked, that a simultaneous exception outranks it, that `mepc`, `mcause`, and `mstatus.MPIE` are correct on entry, and that `mret` restores `MIE` from `MPIE`. Run it with `make formal MOD=irq`.
+
 Spike lockstep co-simulation runs the core against the Spike reference simulator and compares the register and memory write of every retired instruction. Beyond hand-written programs, a randomized program generator feeds the same lockstep check with byte, halfword, and word accesses, a differential test against the golden model that reaches sequences the directed programs miss.
 
 The `alu` carries an exhaustive SymbiYosys proof that its `result`, `zero`, `lt`, and `ltu` match an independent reference model over the full input space, and every module has a self-checking testbench, with the `csr`, `clint`, and timer paths driven through directed trap sequences.
@@ -118,6 +120,7 @@ Every module builds from the top-level Makefile.
 make MOD=alu                                # run a module's testbench
 make wave MOD=alu                           # run the testbench and open the waveform in Surfer
 make formal MOD=alu                         # run the module's SymbiYosys proof
+make formal MOD=irq                         # prove the interrupt-arrival and masking path
 bash formal/rvfi/run.sh                     # run the full riscv-formal proof of the core
 make hex PROG=program                       # assemble tests/program.s to a hex image
 make cosim PROG=cosim1                      # lockstep-compare a program against Spike
