@@ -34,3 +34,4 @@ sw/freertos/*.hex
 sw/coremark-src/
 sw/coremark/*.elf
 sw/coremark/*.hex
+*.ron
