@@ -70,6 +70,8 @@ Synthesized for the Xilinx Artix-7 XC7A35T through sv2v, Yosys, and nextpnr-xili
 make MOD=alu                                # run a module's testbench
 make wave MOD=alu                           # run the testbench and open the waveform in Surfer
 make formal MOD=alu                         # run the module's SymbiYosys proof
+make trace MOD=alu                          # print a formal counterexample as text
+make view-formal MOD=alu                    # open a formal waveform in Surfer
 bash formal/rvfi/run.sh                     # run the full riscv-formal proof of the core
 make hex PROG=program                       # assemble tests/program.s to a hex image
 make cosim PROG=cosim1                      # lockstep-compare a program against Spike
