@@ -15,7 +15,7 @@ module board_top_tb ();
   localparam int CoreClkHz = FastClkHz / ClkDiv;
   localparam int BaudRate = 28_800;
 
-  // Bit period in fast clocks, core samples at CoreClkHz
+  // Bit period
   localparam int ClksPerBit = (FastClkHz + BaudRate / 2) / BaudRate;
 
   logic [31:0] prog[8];
@@ -71,7 +71,7 @@ module board_top_tb ();
     $finish;
   endtask  // Automatic
 
-  // Round-trip a word through mem to the LEDs
+  // Word round trip
   initial begin
     $dumpfile("tb.vcd");
     $dumpvars(0, board_top_tb);

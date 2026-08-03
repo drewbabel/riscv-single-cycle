@@ -168,7 +168,7 @@ module board_top #(
       .store_data (store_data)
   );
 
-  // Split fetch data mem
+  // Split fetch mem
   mem #(
       .XLEN (XLEN),
       .DEPTH(DEPTH)
