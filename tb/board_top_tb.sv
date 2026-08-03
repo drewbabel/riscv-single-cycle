@@ -11,7 +11,7 @@ module board_top_tb ();
   logic        uart_tx;
 
   localparam int FastClkHz = 100_000_000;
-  localparam int ClkDiv = 32;
+  localparam int ClkDiv = 4;
   localparam int CoreClkHz = FastClkHz / ClkDiv;
   localparam int BaudRate = 28_800;
 
