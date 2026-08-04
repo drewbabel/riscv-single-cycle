@@ -1,7 +1,7 @@
 module coremark_boot_tb ();
   localparam int DEPTH = 16384;
   localparam int FastClkHz = 100_000_000;
-  localparam int ClkDiv = 32;
+  localparam int ClkDiv = 4;
   localparam int CoreClkHz = FastClkHz / ClkDiv;
   localparam int BaudRate = 28_800;
   localparam int ClksPerBit = (FastClkHz + BaudRate / 2) / BaudRate;

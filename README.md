@@ -29,13 +29,15 @@ The riscv-formal wrapper ties the timer interrupt low, and `formal/irq.sby` prov
 CoreMark links against the libgcc soft-multiply routines, since the base integer core carries no hardware multiplier.
 
 | Configuration | Cycles/iteration | Iterations/sec | CoreMark/MHz |
-|---------------|------------------|----------------|--------------|
+|---|---|---|---|
 | Simulation | 718,010 | | 1.39 |
-| Basys 3, 3.125 MHz core | 718,010 | 4.35 | 1.39 |
+| Basys 3, 25.0 MHz core | 718,005 | 34.82 | 1.39 |
+
+25.0 MHz comes from a divide-by-4 core enable and is the fastest setting that completes a run with validated CRCs. Divide-by-3 produces no valid run.
 
 ## System-on-chip
 
-`board_top` wraps `riscv_single` for the Basys 3. Instruction fetch and data access run on separate block RAMs, and the core steps once every 32 memory clocks through a clock enable, so the fast memory serves a fetch and a dependent load inside one core cycle.
+`board_top` wraps `riscv_single` for the Basys 3. Instruction fetch and data access run on separate block RAMs, and the core steps once every `ClkDiv` memory clocks through a clock enable, so the fast memory serves a fetch and a dependent load inside one core cycle.
 
 ![board_top system block diagram](docs/board_top_block.svg)
 
