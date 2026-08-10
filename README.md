@@ -51,20 +51,22 @@ CoreMark links against the libgcc soft-multiply routines, since the base integer
 
 ## Implementation
 
-Synthesized for the Xilinx Artix-7 XC7A35T through sv2v, Yosys, and nextpnr-xilinx.
+Utilization comes from AMD Vivado 2026.1 out-of-context synthesis for the Xilinx Artix-7 XC7A35T.
 
 | Module | LUTs | Flip-flops |
 |--------|------|------------|
-| `pc` | 0 | 32 |
+| `pc` | 1 | 32 |
 | `alu_decoder` | 5 | 0 |
-| `control_unit` | 24 | 0 |
-| `control_decoder` | 30 | 0 |
+| `control_unit` | 21 | 0 |
+| `control_decoder` | 27 | 0 |
 | `extend` | 31 | 0 |
-| `clint` | 219 | 128 |
-| `alu` | 497 | 0 |
-| `csr` | 845 | 383 |
-| `regfile` | 911 | 992 |
-| `riscv_single` | 2805 | 1416 |
+| `clint` | 278 | 128 |
+| `alu` | 509 | 0 |
+| `csr` | 649 | 383 |
+| `regfile` | 610 | 992 |
+| `riscv_single` | 2202 | 1407 |
+
+`vivado/util.tcl` drives the same out-of-context synthesis to reproduce the figures above.
 
 ## Building and running
 
