@@ -51,7 +51,7 @@ CoreMark links against the libgcc soft-multiply routines, since the base integer
 
 ## Implementation
 
-Utilization comes from AMD Vivado 2026.1 out-of-context synthesis for the Xilinx Artix-7 XC7A35T.
+Utilization comes from AMD Vivado 2026.1 out-of-context synthesis for the Xilinx Artix-7 XC7A35T, reproducible with `vivado/util.tcl`.
 
 | Module | LUTs | Flip-flops |
 |--------|------|------------|
@@ -65,8 +65,6 @@ Utilization comes from AMD Vivado 2026.1 out-of-context synthesis for the Xilinx
 | `csr` | 649 | 383 |
 | `regfile` | 610 | 992 |
 | `riscv_single` | 2202 | 1407 |
-
-`vivado/util.tcl` drives the same out-of-context synthesis to reproduce the figures above.
 
 ## Building and running
 

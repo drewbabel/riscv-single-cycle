@@ -1,4 +1,4 @@
-# util repro
+# Util repro
 
 set root    [file normalize [file join [file dirname [info script]] ..]]
 set mods    $argv
