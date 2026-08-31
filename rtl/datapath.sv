@@ -3,6 +3,10 @@ module datapath
 #(
     parameter int XLEN = 32
 ) (
+`ifdef RISCV_FORMAL
+    output logic             [XLEN-1:0] dbg_rs1_data,
+    output logic             [XLEN-1:0] dbg_rd_wdata,
+`endif
     input  logic                        clk,
     input  logic                        core_en,
     input  logic                        rst_n,
@@ -29,11 +33,6 @@ module datapath
     output logic                        zero,
     output logic                        lt,
     output logic                        ltu
-`ifdef RISCV_FORMAL
-    ,
-    output logic             [XLEN-1:0] dbg_rs1_data,
-    output logic             [XLEN-1:0] dbg_rd_wdata
-`endif
 );
 
   logic [XLEN-1:0] pc_next;

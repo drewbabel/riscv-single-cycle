@@ -5,20 +5,7 @@ module riscv_single
 #(
     parameter int XLEN = 32
 ) (
-    input  logic            clk,
-    input  logic            core_en,
-    input  logic            rst_n,
-    input  logic [XLEN-1:0] instr,
-    input  logic [XLEN-1:0] read_data,
-    input  logic            timer_irq,
-    output logic [XLEN-1:0] pc,
-    output logic            mem_write,
-    output logic [XLEN-1:0] alu_result,
-    output logic [XLEN-1:0] write_data,
-    output logic [     3:0] store_wstrb,
-    output logic [XLEN-1:0] store_data
 `ifdef RISCV_FORMAL
-    ,
     output logic [XLEN-1:0] dbg_rs1_data,
     output logic [XLEN-1:0] dbg_rd_wdata,
     output logic            dbg_reg_write,
@@ -35,8 +22,20 @@ module riscv_single
     output logic [XLEN-1:0] dbg_mcycle,
     output logic [XLEN-1:0] dbg_minstret,
     output logic [XLEN-1:0] dbg_mcycleh,
-    output logic [XLEN-1:0] dbg_minstreth
+    output logic [XLEN-1:0] dbg_minstreth,
 `endif
+    input  logic            clk,
+    input  logic            core_en,
+    input  logic            rst_n,
+    input  logic [XLEN-1:0] instr,
+    input  logic [XLEN-1:0] read_data,
+    input  logic            timer_irq,
+    output logic [XLEN-1:0] pc,
+    output logic            mem_write,
+    output logic [XLEN-1:0] alu_result,
+    output logic [XLEN-1:0] write_data,
+    output logic [     3:0] store_wstrb,
+    output logic [XLEN-1:0] store_data
 );
 
   logic [2:0] funct3;
@@ -143,6 +142,21 @@ module riscv_single
   csr #(
       .XLEN(XLEN)
   ) csr_inst (
+`ifdef RISCV_FORMAL
+      .dbg_csr_wdata       (dbg_csr_wdata),
+      .dbg_mscratch        (dbg_mscratch),
+      .dbg_mstatus         (dbg_mstatus),
+      .dbg_mtvec           (dbg_mtvec),
+      .dbg_mepc            (dbg_mepc),
+      .dbg_mcause          (dbg_mcause),
+      .dbg_mtval           (dbg_mtval),
+      .dbg_mie             (dbg_mie),
+      .dbg_mip             (dbg_mip),
+      .dbg_mcycle          (dbg_mcycle),
+      .dbg_minstret        (dbg_minstret),
+      .dbg_mcycleh         (dbg_mcycleh),
+      .dbg_minstreth       (dbg_minstreth),
+`endif
       .clk                 (clk),
       .core_en             (core_en),
       .rst_n               (rst_n),
@@ -166,27 +180,15 @@ module riscv_single
       .trap_vector         (trap_vector),
       .mret_taken          (mret_taken),
       .mepc_out            (mepc_out)
-`ifdef RISCV_FORMAL
-      ,
-      .dbg_csr_wdata       (dbg_csr_wdata),
-      .dbg_mscratch        (dbg_mscratch),
-      .dbg_mstatus         (dbg_mstatus),
-      .dbg_mtvec           (dbg_mtvec),
-      .dbg_mepc            (dbg_mepc),
-      .dbg_mcause          (dbg_mcause),
-      .dbg_mtval           (dbg_mtval),
-      .dbg_mie             (dbg_mie),
-      .dbg_mip             (dbg_mip),
-      .dbg_mcycle          (dbg_mcycle),
-      .dbg_minstret        (dbg_minstret),
-      .dbg_mcycleh         (dbg_mcycleh),
-      .dbg_minstreth       (dbg_minstreth)
-`endif
   );
 
   datapath #(
       .XLEN(XLEN)
   ) datapath_inst (
+`ifdef RISCV_FORMAL
+      .dbg_rs1_data (dbg_rs1_data),
+      .dbg_rd_wdata (dbg_rd_wdata),
+`endif
       .clk          (clk),
       .core_en      (core_en),
       .rst_n        (rst_n),
@@ -213,10 +215,6 @@ module riscv_single
       .zero         (zero),
       .lt           (lt),
       .ltu          (ltu)
-`ifdef RISCV_FORMAL,
-      .dbg_rs1_data (dbg_rs1_data),
-      .dbg_rd_wdata (dbg_rd_wdata)
-`endif
   );
 
   assign reg_write_gated = reg_write && !trap_taken;
