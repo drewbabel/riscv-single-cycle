@@ -58,7 +58,7 @@ module board_top #(
   localparam int CoreClkHz = 100_000_000 / ClkDiv;
   logic [$clog2(ClkDiv)-1:0] div = '0;
   logic            core_en;
-  always_ff @(posedge clk) div <= (div == ClkDiv - 1) ? '0 : div + 1'b1;
+  always_ff @(posedge clk) div <= (div == $bits(div)'(ClkDiv - 1)) ? '0 : div + 1'b1;
   assign core_en = (div == 0);
 
   // Power-on reset
