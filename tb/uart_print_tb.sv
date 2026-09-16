@@ -96,7 +96,7 @@ module uart_print_tb ();
   end
 
   initial begin
-    $dumpfile("tb.vcd");
+    $dumpfile("uart_print_tb.vcd");
     $dumpvars(0, uart_print_tb);
     $readmemh("tests/uart_print.hex", prog);
     do_reset();
