@@ -73,7 +73,7 @@ module board_top_tb ();
 
   // Word round trip
   initial begin
-    $dumpfile("tb.vcd");
+    $dumpfile("board_top_tb.vcd");
     $dumpvars(0, board_top_tb);
     $readmemh("tests/memtest.hex", prog);
     do_reset();
